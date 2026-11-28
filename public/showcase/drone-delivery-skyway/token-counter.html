@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Client-side BPE-like tokenizer, UTF-8 byte length meter, character frequency inspector, and token density visualizer for Drone Delivery Skyway." />
+  <title>SKYWAY-EXPRESS // Client-Side Tokenizer &amp; Byte Length Meter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./token-counter.css" />
+</head>
+<body class="skyway-token-body">
+  <header class="glass-nav">
+    <div class="nav-left">
+      <a class="back-link" href="./index.html">&larr; SKYWAY-EXPRESS</a>
+      <span class="nav-divider" aria-hidden="true">/</span>
+      <span class="nav-title">Tokenizer &amp; Byte Meter</span>
+    </div>
+    <div class="badge">AIRSPACE TELEMETRY LAB</div>
+  </header>
+
+  <main class="token-shell" data-token-lab>
+    <section class="hero">
+      <span class="eyebrow">Drone Delivery Skyway &middot; Payload &amp; LLM Token Inspector</span>
+      <h1>Client-Side Tokenizer &amp; Text Byte Length Meter</h1>
+      <p class="subtitle">
+        Estimate LLM tokens using BPE-like subword heuristics, measure exact UTF-8 byte payloads across flight dispatches and corridor telemetry, and monitor context-window warning thresholds in real time.
+      </p>
+    </section>
+
+    <!-- Real-Time Metric Counter Cards -->
+    <section class="metrics-grid" aria-label="Real-time text metrics">
+      <article id="card-tokens" class="metric-card threshold-nominal">
+        <span class="metric-label">Estimated Tokens</span>
+        <strong id="count-tokens" class="metric-value" aria-live="polite">0</strong>
+        <span id="sub-tokens" class="metric-sub">0% of 512 limit</span>
+      </article>
+
+      <article class="metric-card">
+        <span class="metric-label">Words</span>
+        <strong id="count-words" class="metric-value" aria-live="polite">0</strong>
+        <span id="sub-words" class="metric-sub">0 lines</span>
+      </article>
+
+      <article class="metric-card">
+        <span class="metric-label">Characters</span>
+        <strong id="count-chars" class="metric-value" aria-live="polite">0</strong>
+        <span id="sub-chars" class="metric-sub">0 Unicode code pts</span>
+      </article>
+
+      <article id="card-bytes" class="metric-card threshold-nominal">
+        <span class="metric-label">UTF-8 Byte Length</span>
+        <strong id="count-bytes" class="metric-value" aria-live="polite">0</strong>
+        <span id="sub-bytes" class="metric-sub">100% single-byte ASCII</span>
+      </article>
+    </section>
+
+    <!-- Warning Threshold & Context Budget Meter -->
+    <section class="panel budget-panel" aria-labelledby="budget-heading">
+      <div class="budget-top">
+        <div class="budget-title-group">
+          <h2 id="budget-heading">Context Window Threshold Meter</h2>
+          <span id="budget-summary" class="budget-summary">0 / 512 tokens</span>
+        </div>
+
+        <div class="budget-controls">
+          <label class="sr-only" for="context-budget-select">Context budget preset</label>
+          <select id="context-budget-select" class="budget-select" aria-label="Context token budget">
+            <option value="128">Telemetry Beacon Frame (128 tok)</option>
+            <option value="512" selected>Flight Clearance Prompt (512 tok)</option>
+            <option value="4096">Airspace Corridor Planner (4,096 tok)</option>
+            <option value="8192">Fleet Dispatch Batch (8,192 tok)</option>
+          </select>
+          <span id="threshold-badge" class="threshold-badge threshold-nominal" aria-live="polite">
+            NOMINAL &lt;70% (0%)
+          </span>
+        </div>
+      </div>
+
+      <div
+        id="budget-progress-track"
+        class="progress-track"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+        aria-label="Token context budget utilization"
+      >
+        <div id="budget-progress-fill" class="progress-fill threshold-nominal"></div>
+        <span class="threshold-tick tick-warn" title="Warning threshold at 70%">70%</span>
+        <span class="threshold-tick tick-crit" title="Critical threshold at 90%">90%</span>
+      </div>
+    </section>
+
+    <div class="workspace-grid">
+      <!-- Left Column: Live Text Editor + Tokenized Pill View -->
+      <section class="panel editor-panel" aria-labelledby="editor-heading">
+        <div class="panel-header">
+          <div>
+            <span class="step-tag">01 &middot; INPUT &amp; SEGMENTATION</span>
+            <h2 id="editor-heading">Live Text Editor</h2>
+          </div>
+          <div class="toolbar-actions">
+            <button type="button" id="copy-report-btn" class="btn btn-ghost">Copy JSON Metrics</button>
+            <button type="button" id="clear-input-btn" class="btn btn-ghost">Clear</button>
+          </div>
+        </div>
+
+        <div class="presets-bar" role="group" aria-label="Drone delivery sample text presets">
+          <button type="button" class="preset-btn is-active" data-preset-id="dispatch">Flight Clearance</button>
+          <button type="button" class="preset-btn" data-preset-id="metar">METAR &amp; Geofence</button>
+          <button type="button" class="preset-btn" data-preset-id="multilingual">Global Cargo &amp; Emoji</button>
+          <button type="button" class="preset-btn" data-preset-id="burst">Threshold Stress Prompt</button>
+        </div>
+
+        <div class="input-section">
+          <label for="token-input" class="sr-only">Text input to tokenize and measure</label>
+          <textarea
+            id="token-input"
+            rows="6"
+            spellcheck="false"
+            placeholder="Paste drone dispatch clearances, METAR telemetry, geofence JSON, or LLM prompts to inspect BPE-like tokens and UTF-8 bytes..."
+          ></textarea>
+        </div>
+
+        <div class="pills-header">
+          <div class="pills-title-group">
+            <h3>Tokenized Pill View</h3>
+            <span id="pill-count-label" class="pill-count">0 tokens</span>
+          </div>
+          <label class="whitespace-toggle">
+            <input type="checkbox" id="toggle-whitespace" checked />
+            <span>Show whitespace glyphs (&#9251; &#8629; &#8677;)</span>
+          </label>
+        </div>
+
+        <div id="token-pills" class="pills-wrapper" aria-live="polite"></div>
+
+        <div class="pills-footer">
+          <div id="token-inspector" class="token-inspector" aria-live="polite"></div>
+          <button type="button" id="toggle-all-tokens-btn" class="btn btn-ghost" hidden></button>
+        </div>
+      </section>
+
+      <!-- Right Column: Token Density Visualizer & Character Frequency Inspector -->
+      <aside class="panel inspector-panel" aria-labelledby="density-heading">
+        <div class="panel-header">
+          <div>
+            <span class="step-tag">02 &middot; DENSITY &amp; DISTRIBUTION</span>
+            <h2 id="density-heading">Token Density &amp; Byte Inspector</h2>
+          </div>
+        </div>
+
+        <div class="density-grid" aria-label="Token density metrics">
+          <div class="density-stat">
+            <span class="density-label">Chars / Token</span>
+            <strong id="density-chars-per-token" class="density-value">0</strong>
+          </div>
+          <div class="density-stat">
+            <span class="density-label">Bytes / Token</span>
+            <strong id="density-bytes-per-token" class="density-value">0</strong>
+          </div>
+          <div class="density-stat">
+            <span class="density-label">Tokens / Word</span>
+            <strong id="density-tokens-per-word" class="density-value">0</strong>
+          </div>
+          <div class="density-stat">
+            <span class="density-label">Multi-Byte Overhead</span>
+            <strong id="density-utf8-overhead" class="density-value">0 B</strong>
+          </div>
+        </div>
+
+        <div class="distribution-block">
+          <h3>Token Composition Density</h3>
+          <div id="token-kind-bar" class="class-bar" aria-label="Token composition density bar"></div>
+          <div id="token-kind-legend" class="class-legend"></div>
+        </div>
+
+        <div class="distribution-block">
+          <h3>Character Class Distribution</h3>
+          <div id="char-class-bar" class="class-bar" aria-label="Character class distribution bar"></div>
+          <div id="char-class-legend" class="class-legend"></div>
+        </div>
+
+        <div class="frequency-block">
+          <div class="freq-header">
+            <h3>Character Frequency Inspector</h3>
+            <span id="unique-chars-badge" class="pill-count">0 unique</span>
+          </div>
+          <div id="char-freq-list" class="freq-list" aria-live="polite"></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="token-footer">
+    <p>SKYWAY-EXPRESS // Drone Delivery Skyway Isolated Showcase &middot; Client-Side BPE Heuristic Tokenizer &amp; UTF-8 Byte Meter</p>
+  </footer>
+
+  <script type="module" src="./token-counter.js"></script>
+</body>
+</html>
