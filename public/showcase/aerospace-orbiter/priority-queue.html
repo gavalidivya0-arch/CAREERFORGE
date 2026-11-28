@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aerospace Orbiter - Binary Heap Priority Queue &amp; Backpressure Dispatcher</title>
+  <link rel="stylesheet" href="priority-queue.css">
+</head>
+<body class="pq-body">
+  <div class="pq-shell" data-orbiter-queue>
+    <header class="pq-header">
+      <div>
+        <h1 class="pq-title">Aerospace Orbiter Priority Event Queue</h1>
+        <p class="pq-subtitle">Binary heap scheduler with FIFO tie-breaking, token-bucket dispatch pacing, and live backpressure telemetry</p>
+      </div>
+      <div class="header-pills">
+        <span class="status-pill is-active" id="dispatcher-status-pill">Dispatcher: Active</span>
+        <span class="status-pill" id="backpressure-pill">Backpressure: Nominal</span>
+      </div>
+    </header>
+
+    <section class="metrics-grid" aria-label="Queue telemetry metrics">
+      <div class="metric-card">
+        <span class="metric-label">Queue Depth</span>
+        <span class="metric-value" id="depth-val">0</span>
+        <span class="metric-sub" id="peak-depth-sub">Peak depth: 0</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Next In Heap (Peek)</span>
+        <span class="metric-value" id="top-priority-val">Idle</span>
+        <span class="metric-sub" id="top-payload-sub">No pending events</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Dispatched Events</span>
+        <span class="metric-value" id="dispatched-count-val">0</span>
+        <span class="metric-sub" id="dropped-sub">Dropped: 0</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Token Bucket</span>
+        <span class="metric-value" id="token-bucket-val">0 / 1</span>
+        <span class="metric-sub" id="heap-mode-sub">Mode: Max-Heap</span>
+      </div>
+    </section>
+
+    <section class="glass-panel gauge-section" aria-label="Queue depth and backpressure gauge">
+      <div class="gauge-header">
+        <span class="gauge-title">Backpressure Queue Depth Gauge (High-Water Mark: 12 events)</span>
+        <span class="gauge-readout" id="gauge-percent">0%</span>
+      </div>
+      <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="depth-progressbar">
+        <div class="progress-fill" id="depth-progress-bar"></div>
+      </div>
+    </section>
+
+    <section class="controls-grid">
+      <div class="glass-panel">
+        <div class="panel-heading">
+          <h2>Enqueue Telemetry Command</h2>
+          <span class="status-pill" id="heap-size-pill">0 queued</span>
+        </div>
+        <form class="enqueue-form" id="enqueue-form">
+          <div class="form-field full-span">
+            <label class="form-label" for="preset-select">Orbital Telemetry Preset</label>
+            <select class="select-control" id="preset-select">
+              <option value="RCS Thruster Attitude Trim Burn|3">RCS Thruster Attitude Trim Burn (High)</option>
+              <option value="Cabin Oxygen Scrubber Overpressure Alert|4">Cabin Oxygen Scrubber Overpressure Alert (Urgent)</option>
+              <option value="Downlink S-Band Frame Heartbeat|2">Downlink S-Band Frame Heartbeat (Normal)</option>
+              <option value="Solar Array Housekeeping Sweep|1">Solar Array Housekeeping Sweep (Low)</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="task-payload">Event Payload</label>
+            <input class="input-control" id="task-payload" type="text" required placeholder="e.g. Reaction wheel desaturation pulse" value="RCS Thruster Attitude Trim Burn">
+          </div>
+          <div class="form-field">
+            <label class="form-label" for="priority-rank">Priority Rank</label>
+            <select class="select-control" id="priority-rank">
+              <option value="4">Urgent (4)</option>
+              <option value="3" selected>High (3)</option>
+              <option value="2">Normal (2)</option>
+              <option value="1">Low (1)</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Enqueue Event</button>
+            <button class="btn btn-warning" type="button" id="burst-enqueue-btn">Simulate Burst (+6)</button>
+            <button class="btn btn-secondary" type="button" id="dequeue-manual-btn">Step Dequeue</button>
+            <button class="btn btn-danger" type="button" id="clear-queue-btn">Clear Queue</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="glass-panel dispatcher-box">
+        <div class="panel-heading">
+          <h2>Backpressure Dispatcher Pacing</h2>
+          <span class="status-pill" id="rate-badge">650 ms</span>
+        </div>
+        <div class="slider-row">
+          <div class="slider-header">
+            <label class="form-label" for="rate-slider">Dispatch Rate Interval</label>
+            <span class="gauge-readout" id="rate-slider-val">650 ms / event</span>
+          </div>
+          <input class="range-slider" id="rate-slider" type="range" min="100" max="2000" step="50" value="650">
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="heap-mode-select">Binary Heap Ordering</label>
+          <select class="select-control" id="heap-mode-select">
+            <option value="max" selected>Max-Heap (Urgent 4 → Low 1)</option>
+            <option value="min">Min-Heap (Low 1 → Urgent 4)</option>
+          </select>
+        </div>
+        <div class="dispatcher-actions">
+          <button class="btn btn-warning" type="button" id="toggle-dispatch-btn">Pause Dispatcher</button>
+          <button class="btn btn-secondary" type="button" id="clear-feed-btn">Clear Event Feed</button>
+        </div>
+      </div>
+    </section>
+
+    <main class="streams-grid">
+      <section class="glass-panel">
+        <div class="panel-heading">
+          <h2>Binary Heap Array State</h2>
+          <span class="status-pill" id="heap-nodes-count">0 nodes</span>
+        </div>
+        <div class="stream-list" id="heap-nodes-list"></div>
+      </section>
+
+      <section class="glass-panel">
+        <div class="panel-heading">
+          <h2>Processed Event Feed</h2>
+          <span class="status-pill" id="feed-count">0 processed</span>
+        </div>
+        <div class="stream-list" id="event-feed"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { AerospaceOrbiterPriorityQueue } from './priority-queue.js';
+
+    const HIGH_WATER_MARK = 12;
+    const queue = new AerospaceOrbiterPriorityQueue({
+      mode: 'max',
+      highWaterMark: HIGH_WATER_MARK,
+      bucketCapacity: 2
+    });
+
+    const processedFeed = [];
+
+    const depthVal = document.getElementById('depth-val');
+    const peakDepthSub = document.getElementById('peak-depth-sub');
+    const topPriorityVal = document.getElementById('top-priority-val');
+    const topPayloadSub = document.getElementById('top-payload-sub');
+    const dispatchedCountVal = document.getElementById('dispatched-count-val');
+    const droppedSub = document.getElementById('dropped-sub');
+    const tokenBucketVal = document.getElementById('token-bucket-val');
+    const heapModeSub = document.getElementById('heap-mode-sub');
+    const dispatcherStatusPill = document.getElementById('dispatcher-status-pill');
+    const backpressurePill = document.getElementById('backpressure-pill');
+    const gaugePercent = document.getElementById('gauge-percent');
+    const depthProgressBar = document.getElementById('depth-progress-bar');
+    const depthProgressbar = document.getElementById('depth-progressbar');
+    const heapSizePill = document.getElementById('heap-size-pill');
+    const heapNodesCount = document.getElementById('heap-nodes-count');
+    const heapNodesList = document.getElementById('heap-nodes-list');
+    const feedCount = document.getElementById('feed-count');
+    const eventFeed = document.getElementById('event-feed');
+
+    const enqueueForm = document.getElementById('enqueue-form');
+    const presetSelect = document.getElementById('preset-select');
+    const taskPayloadInput = document.getElementById('task-payload');
+    const priorityRankSelect = document.getElementById('priority-rank');
+    const burstEnqueueBtn = document.getElementById('burst-enqueue-btn');
+    const dequeueManualBtn = document.getElementById('dequeue-manual-btn');
+    const clearQueueBtn = document.getElementById('clear-queue-btn');
+    const rateSlider = document.getElementById('rate-slider');
+    const rateSliderVal = document.getElementById('rate-slider-val');
+    const rateBadge = document.getElementById('rate-badge');
+    const heapModeSelect = document.getElementById('heap-mode-select');
+    const toggleDispatchBtn = document.getElementById('toggle-dispatch-btn');
+    const clearFeedBtn = document.getElementById('clear-feed-btn');
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function getBadgeClass(priority) {
+      switch (Number(priority)) {
+        case 4:
+          return 'badge-urgent';
+        case 3:
+          return 'badge-high';
+        case 2:
+          return 'badge-normal';
+        default:
+          return 'badge-low';
+      }
+    }
+
+    function render() {
+      const metrics = queue.getMetrics();
+      const topNode = queue.peekNode();
+      const nodes = queue.toArray();
+      const pct = Math.min(100, Math.round(metrics.saturationRatio * 100));
+
+      depthVal.textContent = String(metrics.depth);
+      peakDepthSub.textContent = `Peak depth: ${metrics.maxDepth}`;
+      dispatchedCountVal.textContent = String(metrics.dispatchedCount);
+      droppedSub.textContent = `Dropped: ${metrics.droppedCount}`;
+      tokenBucketVal.textContent = `${metrics.tokens} / ${metrics.bucketCapacity}`;
+      heapModeSub.textContent = `Mode: ${metrics.mode === 'min' ? 'Min-Heap' : 'Max-Heap'}`;
+      heapSizePill.textContent = `${metrics.depth} queued`;
+      heapNodesCount.textContent = `${metrics.depth} nodes`;
+      feedCount.textContent = `${processedFeed.length} processed`;
+
+      if (topNode) {
+        const label = AerospaceOrbiterPriorityQueue.getPriorityLabel(topNode.priority);
+        topPriorityVal.textContent = `${label} (P${topNode.priority})`;
+        topPayloadSub.textContent = String(topNode.item);
+      } else {
+        topPriorityVal.textContent = 'Idle';
+        topPayloadSub.textContent = 'No pending events';
+      }
+
+      gaugePercent.textContent = `${pct}%`;
+      depthProgressBar.style.width = `${pct}%`;
+      depthProgressbar.setAttribute('aria-valuenow', String(pct));
+      depthProgressBar.className = 'progress-fill';
+      backpressurePill.className = 'status-pill';
+
+      if (metrics.backpressureLevel === 'critical') {
+        depthProgressBar.classList.add('is-critical');
+        backpressurePill.classList.add('is-critical');
+        backpressurePill.textContent = 'Backpressure: Critical';
+      } else if (metrics.backpressureLevel === 'elevated') {
+        depthProgressBar.classList.add('is-warning');
+        backpressurePill.classList.add('is-warning');
+        backpressurePill.textContent = 'Backpressure: Elevated';
+      } else {
+        backpressurePill.classList.add('is-active');
+        backpressurePill.textContent = 'Backpressure: Nominal';
+      }
+
+      if (metrics.isDispatching) {
+        dispatcherStatusPill.textContent = 'Dispatcher: Active';
+        dispatcherStatusPill.className = 'status-pill is-active';
+        toggleDispatchBtn.textContent = 'Pause Dispatcher';
+        toggleDispatchBtn.className = 'btn btn-warning';
+      } else {
+        dispatcherStatusPill.textContent = 'Dispatcher: Paused';
+        dispatcherStatusPill.className = 'status-pill is-warning';
+        toggleDispatchBtn.textContent = 'Resume Dispatcher';
+        toggleDispatchBtn.className = 'btn btn-accent';
+      }
+
+      if (nodes.length === 0) {
+        heapNodesList.innerHTML = '<div class="empty-state">Heap is empty. Enqueue telemetry commands to inspect heap ordering.</div>';
+      } else {
+        heapNodesList.innerHTML = nodes
+          .map((node, index) => {
+            const label = AerospaceOrbiterPriorityQueue.getPriorityLabel(node.priority);
+            return `
+              <div class="heap-node-item">
+                <div class="heap-node-main">
+                  <span class="heap-index">[${index}] #${node.insertOrder}</span>
+                  <span class="node-payload">${escapeHtml(node.item)}</span>
+                </div>
+                <span class="priority-badge ${getBadgeClass(node.priority)}">${escapeHtml(label)}</span>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      if (processedFeed.length === 0) {
+        eventFeed.innerHTML = '<div class="empty-state">Dispatched telemetry events will stream here at the configured rate.</div>';
+      } else {
+        eventFeed.innerHTML = processedFeed
+          .slice(0, 20)
+          .map((entry) => {
+            const label = AerospaceOrbiterPriorityQueue.getPriorityLabel(entry.priority);
+            return `
+              <article class="event-card">
+                <div class="event-card-top">
+                  <span class="priority-badge ${getBadgeClass(entry.priority)}">${escapeHtml(label)}</span>
+                  <span class="event-meta">Seq #${entry.insertOrder} • ${escapeHtml(entry.dispatchedAt)}</span>
+                </div>
+                <div class="event-payload">${escapeHtml(entry.item)}</div>
+              </article>
+            `;
+          })
+          .join('');
+      }
+    }
+
+    function recordDispatched(item, node) {
+      processedFeed.unshift({
+        item,
+        priority: node.priority,
+        insertOrder: node.insertOrder,
+        dispatchedAt: new Date().toLocaleTimeString()
+      });
+      if (processedFeed.length > 50) {
+        processedFeed.length = 50;
+      }
+      render();
+    }
+
+    queue.subscribe(() => render());
+
+    let currentRateMs = Number(rateSlider.value) || 650;
+    queue.startDispatcher(currentRateMs, recordDispatched);
+
+    enqueueForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const payload = taskPayloadInput.value.trim();
+      const priority = Number(priorityRankSelect.value);
+      if (!payload) return;
+      queue.enqueue(payload, priority);
+      taskPayloadInput.value = '';
+    });
+
+    presetSelect.addEventListener('change', (event) => {
+      const [payload, rank] = event.target.value.split('|');
+      taskPayloadInput.value = payload;
+      priorityRankSelect.value = rank;
+    });
+
+    burstEnqueueBtn.addEventListener('click', () => {
+      const burstEvents = [
+        ['Star Tracker Calibration Ping', 1],
+        ['Thermal Radiator Loop Nominal Check', 2],
+        ['Orbital Apogee Trajectory Correction', 3],
+        ['CRITICAL: Propellant Valve Pressure Spike', 4],
+        ['Telemetry Downlink Packet Frame #88', 2],
+        ['Gyroscope Drift Compensation Burn', 3]
+      ];
+      for (const [payload, rank] of burstEvents) {
+        queue.enqueue(payload, rank);
+      }
+    });
+
+    dequeueManualBtn.addEventListener('click', () => {
+      const topNode = queue.peekNode();
+      if (!topNode) return;
+      const item = queue.dequeue();
+      recordDispatched(item, topNode);
+    });
+
+    clearQueueBtn.addEventListener('click', () => {
+      queue.clear();
+    });
+
+    clearFeedBtn.addEventListener('click', () => {
+      processedFeed.length = 0;
+      render();
+    });
+
+    rateSlider.addEventListener('input', (event) => {
+      currentRateMs = Number(event.target.value);
+      rateSliderVal.textContent = `${currentRateMs} ms / event`;
+      rateBadge.textContent = `${currentRateMs} ms`;
+      if (queue.isDispatching) {
+        queue.startDispatcher(currentRateMs, recordDispatched);
+      }
+    });
+
+    toggleDispatchBtn.addEventListener('click', () => {
+      if (queue.isDispatching) {
+        queue.stopDispatcher();
+      } else {
+        queue.startDispatcher(currentRateMs, recordDispatched);
+      }
+    });
+
+    heapModeSelect.addEventListener('change', (event) => {
+      queue.setMode(event.target.value);
+    });
+
+    // Seed initial orbital events
+    queue.enqueue('Payload Bay Door Sensor Heartbeat', 1);
+    queue.enqueue('S-Band Telemetry Sync Frame', 2);
+    queue.enqueue('Reaction Wheel Desaturation Burn', 3);
+    queue.enqueue('URGENT: Primary Thruster Manifold Overtemp', 4);
+    render();
+  </script>
+</body>
+</html>
