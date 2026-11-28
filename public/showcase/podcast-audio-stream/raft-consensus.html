@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Podcast Audio Stream — Distributed Raft Consensus &amp; Leader Election</title>
+  <link rel="stylesheet" href="./raft-consensus.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <main class="raft-container" data-raft-lab>
+    <nav class="top-nav" aria-label="Showcase navigation">
+      <a href="index.html" class="back-link">← Back to Podcast Audio Stream</a>
+      <div class="cluster-badge-pill">
+        <span class="pulse-dot" aria-hidden="true"></span>
+        <span>PODCAST AUDIO STREAM • RAFT CONSENSUS ENGINE</span>
+      </div>
+    </nav>
+
+    <header class="raft-header">
+      <div class="header-badge">DISTRIBUTED STREAM QUORUM v4.1</div>
+      <h1>Podcast Audio Stream — Raft Consensus &amp; Leader Election</h1>
+      <p class="subtitle">
+        Simulated multi-node Raft state machine coordinating distributed audio chunk ingest, live HLS manifest replication,
+        randomized heartbeat election timeouts, vote request RPC exchanges, and majority quorum commits.
+      </p>
+
+      <div class="cluster-status-bar" aria-label="Cluster telemetry">
+        <div class="status-chip" id="term-chip">Current Term: <strong id="current-term-val">1</strong></div>
+        <div class="status-chip" id="leader-chip">Active Leader: <strong id="current-leader-val">None</strong></div>
+        <div class="status-chip" id="quorum-chip">Majority Quorum: <strong id="quorum-val">3 of 5 Nodes</strong></div>
+        <div class="status-chip" id="logs-chip">Committed Stream Logs: <strong id="committed-logs-val">0</strong></div>
+      </div>
+    </header>
+
+    <section class="controls-toolbar" aria-label="Cluster controls">
+      <div class="toolbar-group">
+        <label for="cluster-size">Cluster Topology:</label>
+        <select id="cluster-size" class="control-select">
+          <option value="5" selected>5-Node Stream Cluster (Quorum: 3)</option>
+          <option value="3">3-Node Stream Cluster (Quorum: 2)</option>
+        </select>
+      </div>
+
+      <div class="toolbar-buttons">
+        <button type="button" id="election-btn" class="action-btn election-btn">⚡ Trigger Election</button>
+        <button type="button" id="split-vote-btn" class="action-btn split-btn">⚖️ Simulate Split Vote</button>
+        <button type="button" id="heartbeat-btn" class="action-btn heartbeat-btn">💓 Send Heartbeats</button>
+        <button type="button" id="kill-leader-btn" class="action-btn kill-btn">🛑 Kill Active Leader</button>
+        <button type="button" id="partition-btn" class="action-btn partition-btn">🔀 Partition Network</button>
+        <button type="button" id="auto-sim-btn" class="action-btn auto-btn" aria-pressed="false">⏱️ Auto Timeouts: OFF</button>
+      </div>
+    </section>
+
+    <section class="log-input-section" aria-label="Stream log replication">
+      <div class="log-input-header">
+        <label for="command-input">Replicate Podcast Stream State Command:</label>
+        <div class="preset-chips" aria-label="Preset stream commands">
+          <button type="button" class="preset-chip" data-command="SYNC_EPISODE_CHUNK: ep=142 seg=084 bitrate=320kbps">SYNC_EPISODE_CHUNK</button>
+          <button type="button" class="preset-chip" data-command="PUBLISH_HLS_MANIFEST: feed=waveform-main seq=4092">PUBLISH_HLS_MANIFEST</button>
+          <button type="button" class="preset-chip" data-command="COMMIT_CHAPTER_MARKER: ep=142 ts=18m40s title=Raft_Consensus">COMMIT_CHAPTER_MARKER</button>
+        </div>
+      </div>
+      <div class="input-row">
+        <input
+          id="command-input"
+          class="command-input"
+          type="text"
+          value="SYNC_EPISODE_CHUNK: ep=142 seg=084 bitrate=320kbps"
+          placeholder="Enter stream replication command..."
+        />
+        <button type="button" id="replicate-btn" class="primary-btn">📥 Replicate &amp; Commit</button>
+      </div>
+      <p id="replicate-status" class="replicate-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="cluster-diagram-section" aria-label="Cluster topology diagram">
+      <div class="section-title">
+        <h2>Cluster Topology &amp; Node State Machine</h2>
+        <div class="legend-items">
+          <span class="legend-badge leader-glow">Leader</span>
+          <span class="legend-badge follower-glow">Follower</span>
+          <span class="legend-badge candidate-glow">Candidate</span>
+          <span class="legend-badge dead-glow">Offline</span>
+        </div>
+      </div>
+
+      <div class="diagram-stage">
+        <div id="nodes-container" class="nodes-grid"></div>
+        <div id="packet-overlay" class="packet-overlay" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="lower-grid">
+      <section class="log-viewer-section" aria-label="Replicated log viewer">
+        <div class="viewer-header">
+          <h2>Replicated Audio Stream Log</h2>
+          <span id="log-count-tag" class="count-tag">0 entries committed</span>
+        </div>
+        <div class="log-table-wrapper">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Index</th>
+                <th>Term</th>
+                <th>Stream Command</th>
+                <th>Status</th>
+                <th>Quorum Acks</th>
+              </tr>
+            </thead>
+            <tbody id="log-entries-body">
+              <tr>
+                <td colspan="5" class="empty-log-msg">No stream log entries replicated yet. Submit a command above.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="rpc-viewer-section" aria-label="RPC exchange log">
+        <div class="viewer-header">
+          <h2>RPC Message Exchanges</h2>
+          <span id="rpc-count-tag" class="count-tag">0 RPCs</span>
+        </div>
+        <ul id="rpc-feed-list" class="rpc-feed-list">
+          <li class="empty-rpc-msg">Waiting for RequestVote / AppendEntries RPCs...</li>
+        </ul>
+      </aside>
+    </section>
+  </main>
+
+  <script type="module" src="./raft-consensus.js"></script>
+</body>
+</html>
