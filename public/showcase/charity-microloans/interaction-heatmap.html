@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MICRO-IMPACT // Interaction heatmap</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="interaction-heatmap.css" />
+</head>
+<body class="heat-page">
+  <header class="glass-nav">
+    <div class="brand"><span>MICRO-IMPACT</span></div>
+    <a class="badge" href="index.html">Back to showcase</a>
+  </header>
+
+  <main class="heat-main">
+    <h1>Where do lenders look?</h1>
+    <p>Move over and click the sample loan cards, then show the heatmap. Nothing leaves this tab.</p>
+    <section class="heat-cards" aria-label="Sample loan requests">
+      <article><h2>Seed stock, Kisumu</h2><p>$450 over 8 months</p><button type="button">Lend $25</button></article>
+      <article><h2>Sewing machine, Pune</h2><p>$300 over 6 months</p><button type="button">Lend $25</button></article>
+      <article><h2>Cold box, Cebu</h2><p>$600 over 12 months</p><button type="button">Lend $25</button></article>
+    </section>
+  </main>
+
+  <canvas id="heat-canvas" class="heat-canvas" aria-hidden="true" hidden></canvas>
+
+  <div class="heat-dock" role="group" aria-label="Heatmap controls">
+    <button id="heat-toggle" type="button" aria-pressed="false">Show heatmap</button>
+    <label>Opacity <input id="heat-opacity" type="range" min="10" max="100" value="70" /></label>
+    <button id="heat-clear" type="button">Clear points</button>
+    <output id="heat-readout">0 points</output>
+  </div>
+
+  <script type="module" src="interaction-heatmap.js"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+.heat-page {
+  display: block;
+  padding-bottom: 7rem;
+}
+
+.heat-main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.heat-main > p {
+  color: var(--text-muted);
+  margin: 0.5rem 0 2rem;
+}
+
+.heat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+
+.heat-cards article {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+}
+
+.heat-cards h2 {
+  font-size: 1.05rem;
+}
+
+.heat-page button {
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.heat-page button[aria-pressed="true"],
+.heat-page button:hover {
+  background: var(--accent);
+}
+
+.heat-page button:focus-visible,
+.heat-page input:focus-visible {
+  outline: 2px solid var(--text-main);
+  outline-offset: 2px;
+}
+
+/* The overlay never blocks the page underneath. */
+.heat-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.heat-canvas[hidden] {
+  display: none;
+}
+
+.heat-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(42rem, calc(100% - 2rem));
+  padding: 0.75rem 1rem;
+  transform: translateX(-50%);
+  background: #111827;
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+}
+
+.heat-dock output {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.heat-dock label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
