@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cybersecurity Sentinel — Distributed Raft Consensus &amp; Leader Election</title>
+  <link rel="stylesheet" href="./raft-consensus.css" />
+</head>
+<body class="sentinel-raft-body">
+  <main class="raft-shell" data-raft-lab>
+    <!-- Header & Telemetry Strip -->
+    <header class="raft-header">
+      <div class="header-top">
+        <div class="sentinel-badge">
+          <span class="badge-dot" aria-hidden="true"></span>
+          <span>CYBERSECURITY SENTINEL // ZERO-TRUST CONSENSUS ENGINE</span>
+        </div>
+        <h1>Distributed Raft Consensus &amp; Leader Election</h1>
+        <p class="header-subtitle">
+          Fault-tolerant SIEM state machine simulating Leader, Follower, and Candidate transitions,
+          randomized election timeouts, RequestVote RPC exchanges, network partitions, and quorum log replication.
+        </p>
+      </div>
+
+      <div class="telemetry-strip" aria-label="Cluster metrics">
+        <div class="telemetry-chip">
+          <span class="chip-label">CURRENT TERM</span>
+          <strong id="term-counter-val" class="chip-value gold">0</strong>
+        </div>
+        <div class="telemetry-chip">
+          <span class="chip-label">ACTIVE LEADER</span>
+          <strong id="leader-val" class="chip-value cyan">NO LEADER</strong>
+        </div>
+        <div class="telemetry-chip">
+          <span class="chip-label">MAJORITY QUORUM</span>
+          <strong id="quorum-val" class="chip-value">3 / 5 Nodes</strong>
+        </div>
+        <div class="telemetry-chip">
+          <span class="chip-label">COMMITTED LOGS</span>
+          <strong id="committed-val" class="chip-value emerald">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <!-- Cluster Controls Toolbar -->
+    <section class="panel controls-panel" aria-label="Cluster controls">
+      <div class="controls-row">
+        <div class="cluster-size-group">
+          <label for="cluster-size-select">Topology:</label>
+          <select id="cluster-size-select" class="hud-select">
+            <option value="5" selected>5-Node Sentinel Cluster (Quorum 3)</option>
+            <option value="3">3-Node Sentinel Cluster (Quorum 2)</option>
+          </select>
+        </div>
+
+        <div class="controls-actions">
+          <button type="button" id="start-election-btn" class="hud-btn btn-purple">⚡ Start Election</button>
+          <button type="button" id="send-heartbeat-btn" class="hud-btn btn-cyan">💓 Send Heartbeats</button>
+          <button type="button" id="split-vote-btn" class="hud-btn btn-amber">⚖️ Simulate Split Vote</button>
+          <button type="button" id="kill-leader-btn" class="hud-btn btn-danger">💀 Kill Leader</button>
+          <button type="button" id="partition-toggle-btn" class="hud-btn btn-warn">🚧 Partition Network (Isolate Minority)</button>
+          <button type="button" id="auto-timeout-toggle-btn" class="hud-btn btn-ghost">⏱️ Auto-Timeouts: OFF</button>
+        </div>
+      </div>
+
+      <!-- Log Replication Command Input -->
+      <div class="replicate-bar">
+        <label for="command-input" class="replicate-label">Replicate Zero-Trust Security Command:</label>
+        <div class="preset-row">
+          <button type="button" class="preset-chip" data-preset-cmd="ISOLATE_ENDPOINT host=ws-prod-42 reason=c2-beacon">ISOLATE_ENDPOINT</button>
+          <button type="button" class="preset-chip" data-preset-cmd="PUSH_WAF_RULE signature=CVE-2026-4136 action=BLOCK">PUSH_WAF_RULE</button>
+          <button type="button" class="preset-chip" data-preset-cmd="ROTATE_KMS_KEY vault=zero-trust-root epoch=9">ROTATE_KMS_KEY</button>
+          <button type="button" class="preset-chip" data-preset-cmd="REVOKE_SESSION_TOKEN actor=svc-gateway-03">REVOKE_TOKEN</button>
+        </div>
+        <div class="replicate-input-row">
+          <input
+            type="text"
+            id="command-input"
+            class="hud-input"
+            value="ISOLATE_ENDPOINT host=ws-prod-42 reason=c2-beacon"
+            placeholder="Enter security policy or threat containment command..."
+            autocomplete="off"
+          />
+          <button type="button" id="replicate-btn" class="hud-btn btn-primary">📥 Replicate &amp; Commit</button>
+        </div>
+        <p id="action-status" class="action-status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- Cluster Topology Diagram -->
+    <section class="panel diagram-panel" aria-label="Cluster topology diagram">
+      <div class="panel-header">
+        <h2>Cluster Topology &amp; Node State Machine</h2>
+        <div class="state-legend">
+          <span class="legend-item legend-leader">Leader (Gold)</span>
+          <span class="legend-item legend-follower">Follower (Cyan)</span>
+          <span class="legend-item legend-candidate">Candidate (Purple)</span>
+          <span class="legend-item legend-dead">Offline</span>
+        </div>
+      </div>
+
+      <div class="topology-stage">
+        <div id="nodes-grid" class="nodes-grid"></div>
+        <div id="packet-layer" class="packet-layer" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- Bottom Grid: Log Replication Viewer + RPC Telemetry -->
+    <div class="bottom-grid">
+      <section class="panel log-panel" aria-label="Log replication viewer">
+        <div class="panel-header">
+          <h2>Replicated Security Log</h2>
+          <span id="log-total-badge" class="count-pill">0 committed</span>
+        </div>
+        <div class="log-table-scroll">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Index</th>
+                <th>Term</th>
+                <th>Security Command</th>
+                <th>Status</th>
+                <th>Replicated By</th>
+              </tr>
+            </thead>
+            <tbody id="log-viewer-body">
+              <tr>
+                <td colspan="5" class="empty-row">No security policy logs committed yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel rpc-panel" aria-label="RPC and state machine telemetry">
+        <div class="panel-header">
+          <h2>RPC &amp; State Telemetry</h2>
+          <span class="count-pill">Live Stream</span>
+        </div>
+        <ul id="rpc-stream" class="rpc-stream"></ul>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./raft-consensus.js"></script>
+</body>
+</html>
