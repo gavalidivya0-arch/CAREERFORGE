@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cybersecurity Sentinel — Immutable Snapshot &amp; Time-Travel Debugger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="snapshot-time-travel.css" />
+</head>
+<body>
+  <div class="tt-shell">
+    <header class="tt-header">
+      <div class="tt-title-group">
+        <span class="tt-eyebrow">// ZERO-TRUST SOC FORENSIC ENGINE</span>
+        <h1>Immutable State Snapshot &amp; Time-Travel Debugger</h1>
+        <p class="tt-subtitle">
+          Bidirectional scrub playback, property-level diff inspection, breakpoint traps, and deterministic JSON history export.
+        </p>
+      </div>
+      <div class="tt-header-actions">
+        <button type="button" class="tt-btn tt-btn--primary" id="exportJsonBtn">Export JSON</button>
+        <button type="button" class="tt-btn" id="importJsonBtn">Import JSON</button>
+        <input type="file" id="importFileInput" accept=".json,application/json" hidden />
+        <button type="button" class="tt-btn tt-btn--danger" id="resetTimelineBtn">Reset Timeline</button>
+      </div>
+    </header>
+
+    <section class="tt-deck" aria-label="Timeline Scrubber and Playback Controls">
+      <div class="tt-deck-top">
+        <div class="tt-frame-meta">
+          <span class="tt-frame-pill" id="frameCounterPill">Frame 0 / 0</span>
+          <span class="tt-label-readout" id="activeLabelReadout">No snapshot selected</span>
+          <span class="tt-time-readout" id="activeTimeReadout">--:--:--</span>
+        </div>
+        <div class="tt-status-flags">
+          <span class="tt-frozen-badge" id="immutabilityBadge">🔒 IMMUTABLE FROZEN</span>
+          <span class="tt-playback-badge" id="playbackStatusBadge">IDLE</span>
+        </div>
+      </div>
+
+      <div class="scrubber-stage">
+        <div class="scrubber-track-wrapper" id="scrubberTrackWrapper">
+          <div class="frame-cursor" id="frameCursor" aria-hidden="true">
+            <span class="frame-cursor-tag" id="frameCursorTag">#0</span>
+            <span class="frame-cursor-needle"></span>
+          </div>
+          <div class="scrubber-ticks" id="scrubberTicks" aria-label="Snapshot timeline tick marks"></div>
+          <label for="timelineScrubber" class="sr-only">Time-travel timeline scrubber</label>
+          <input
+            type="range"
+            id="timelineScrubber"
+            class="timeline-scrubber"
+            min="0"
+            max="0"
+            value="0"
+            step="1"
+            aria-label="Timeline frame scrubber"
+          />
+        </div>
+      </div>
+
+      <div class="tt-transport-row">
+        <div class="tt-transport-group" role="group" aria-label="Playback and step controls">
+          <button type="button" class="tt-btn tt-btn--sm" id="btnFirst" title="Jump to first snapshot">⏮ First</button>
+          <button type="button" class="tt-btn tt-btn--sm" id="btnPlayBackward" title="Play backward in time">◀◀ Reverse</button>
+          <button type="button" class="tt-btn tt-btn--sm" id="btnStepBack" title="Step backward (Undo)">◀ Step Back</button>
+          <button type="button" class="tt-btn tt-btn--sm tt-btn--accent" id="btnPlayPause" title="Play or pause playback">▶ Play</button>
+          <button type="button" class="tt-btn tt-btn--sm" id="btnStepForward" title="Step forward (Redo)">Step Forward ▶</button>
+          <button type="button" class="tt-btn tt-btn--sm" id="btnLast" title="Jump to latest snapshot">Last ⏭</button>
+        </div>
+
+        <div class="tt-playback-options">
+          <label class="tt-speed-label" for="playbackSpeedSelect">
+            Speed
+            <select id="playbackSpeedSelect" class="tt-select">
+              <option value="1200">0.5x</option>
+              <option value="700" selected>1x</option>
+              <option value="350">2x</option>
+              <option value="150">4x</option>
+            </select>
+          </label>
+          <button type="button" class="tt-btn tt-btn--sm tt-btn--warn" id="btnToggleBreakpoint">
+            ● Toggle Breakpoint
+          </button>
+        </div>
+      </div>
+
+      <div class="tt-breakpoint-bar">
+        <form id="watchRuleForm" class="tt-watch-form">
+          <span class="tt-watch-title">Breakpoint Watch:</span>
+          <input type="text" id="watchPathInput" class="tt-input" placeholder="Property path (e.g. threatLevel)" value="threatLevel" aria-label="Watch property path" />
+          <span class="tt-eq">===</span>
+          <input type="text" id="watchValueInput" class="tt-input" placeholder='JSON or string (e.g. CRITICAL)' value="CRITICAL" aria-label="Watch expected value" />
+          <button type="submit" class="tt-btn tt-btn--sm">Add Watch</button>
+        </form>
+        <div class="tt-watch-chips" id="watchChips" aria-label="Active watch breakpoints"></div>
+      </div>
+
+      <div class="tt-breakpoint-banner" id="breakpointBanner" hidden role="alert">
+        <span id="breakpointBannerText">Breakpoint triggered</span>
+      </div>
+    </section>
+
+    <main class="tt-workspace">
+      <section class="tt-panel tt-timeline-panel" aria-labelledby="timelinePanelTitle">
+        <div class="tt-panel-head">
+          <h2 id="timelinePanelTitle">Snapshot Timeline</h2>
+          <span class="tt-count-chip" id="snapshotCountChip">0 frames</span>
+        </div>
+
+        <div class="tt-sim-actions" aria-label="Simulate Cybersecurity Sentinel transitions">
+          <button type="button" class="tt-chip-btn" data-sim="port-scan">+ Port Scan</button>
+          <button type="button" class="tt-chip-btn" data-sim="block-ip">+ Block IP</button>
+          <button type="button" class="tt-chip-btn" data-sim="isolate-subnet">+ Isolate Subnet</button>
+          <button type="button" class="tt-chip-btn" data-sim="escalate">+ Critical Alert</button>
+          <button type="button" class="tt-chip-btn" data-sim="resolve">+ Resolve Posture</button>
+        </div>
+
+        <div class="tt-history-list" id="snapshotList" role="listbox" aria-label="Committed snapshots"></div>
+
+        <details class="tt-custom-commit">
+          <summary>Commit Custom State Snapshot</summary>
+          <form id="customCommitForm" class="tt-custom-form">
+            <input type="text" id="customLabelInput" class="tt-input" placeholder="Action / Snapshot label" required />
+            <textarea id="customStateInput" class="tt-textarea" rows="4" aria-label="Custom JSON state"></textarea>
+            <button type="submit" class="tt-btn tt-btn--primary tt-btn--sm">Commit Immutable Snapshot</button>
+          </form>
+        </details>
+      </section>
+
+      <section class="tt-panel tt-diff-panel" aria-labelledby="diffPanelTitle">
+        <div class="tt-panel-head">
+          <h2 id="diffPanelTitle">State Diff Inspector</h2>
+          <div class="tt-diff-summary-badges" id="diffSummaryBadges">
+            <span class="diff-badge diff-badge--added">+0 Added</span>
+            <span class="diff-badge diff-badge--removed">-0 Removed</span>
+            <span class="diff-badge diff-badge--modified">~0 Modified</span>
+          </div>
+        </div>
+        <div class="tt-diff-list" id="diffInspectorList"></div>
+      </section>
+
+      <section class="tt-panel tt-state-panel" aria-labelledby="statePanelTitle">
+        <div class="tt-panel-head">
+          <h2 id="statePanelTitle">Active Snapshot State</h2>
+          <span class="tt-count-chip" id="snapshotIdChip">id: --</span>
+        </div>
+        <pre class="tt-json-view" id="activeStateJson">// No snapshot active</pre>
+      </section>
+    </main>
+
+    <p class="tt-toast" id="statusToast" role="status" aria-live="polite"></p>
+  </div>
+
+  <script type="module">
+    import { CybersecuritySentinelTimeTravelStore } from './snapshot-time-travel.js';
+
+    const store = new CybersecuritySentinelTimeTravelStore(
+      {
+        clusterId: 'sentinel-soc-us-east-1',
+        threatLevel: 'NOMINAL',
+        activeAlerts: 0,
+        blockedIps: ['192.0.2.14'],
+        quarantinedSubnets: [],
+        firewall: { wafEnabled: true, mode: 'ENFORCE', rulesCount: 4120 },
+        lastRuleTriggered: null
+      },
+      { initialLabel: 'SOC Baseline Initialized' }
+    );
+
+    // Seed realistic Cybersecurity Sentinel incident lifecycle snapshots
+    store.commitSnapshot(
+      {
+        clusterId: 'sentinel-soc-us-east-1',
+        threatLevel: 'ELEVATED',
+        activeAlerts: 2,
+        blockedIps: ['192.0.2.14', '198.51.100.77'],
+        quarantinedSubnets: [],
+        firewall: { wafEnabled: true, mode: 'ENFORCE', rulesCount: 4121 },
+        lastRuleTriggered: 'SYN_FLOOD_GUARD'
+      },
+      'Detect SYN Flood Probe (198.51.100.77)'
+    );
+
+    store.commitSnapshot(
+      {
+        clusterId: 'sentinel-soc-us-east-1',
+        threatLevel: 'CRITICAL',
+        activeAlerts: 5,
+        blockedIps: ['192.0.2.14', '198.51.100.77', '203.0.113.99'],
+        quarantinedSubnets: ['10.24.8.0/24'],
+        firewall: { wafEnabled: true, mode: 'STRICT_LOCKDOWN', rulesCount: 4125 },
+        lastRuleTriggered: 'ZERO_DAY_RCE_SHIELD'
+      },
+      'Zero-Day RCE Mitigation & Subnet Quarantine'
+    );
+
+    store.commitSnapshot(
+      {
+        clusterId: 'sentinel-soc-us-east-1',
+        threatLevel: 'GUARDED',
+        activeAlerts: 1,
+        blockedIps: ['192.0.2.14', '198.51.100.77', '203.0.113.99'],
+        quarantinedSubnets: ['10.24.8.0/24'],
+        firewall: { wafEnabled: true, mode: 'ENFORCE', rulesCount: 4125 },
+        lastRuleTriggered: 'POST_CONTAINMENT_AUDIT'
+      },
+      'Containment Verified — Audit Active'
+    );
+
+    store.addBreakpoint(2);
+    store.addWatchRule('threatLevel', 'CRITICAL');
+
+    // DOM Elements
+    const scrubber = document.getElementById('timelineScrubber');
+    const scrubberTicks = document.getElementById('scrubberTicks');
+    const frameCursor = document.getElementById('frameCursor');
+    const frameCursorTag = document.getElementById('frameCursorTag');
+    const frameCounterPill = document.getElementById('frameCounterPill');
+    const activeLabelReadout = document.getElementById('activeLabelReadout');
+    const activeTimeReadout = document.getElementById('activeTimeReadout');
+    const playbackStatusBadge = document.getElementById('playbackStatusBadge');
+    const snapshotCountChip = document.getElementById('snapshotCountChip');
+    const snapshotList = document.getElementById('snapshotList');
+    const diffSummaryBadges = document.getElementById('diffSummaryBadges');
+    const diffInspectorList = document.getElementById('diffInspectorList');
+    const activeStateJson = document.getElementById('activeStateJson');
+    const snapshotIdChip = document.getElementById('snapshotIdChip');
+    const watchChips = document.getElementById('watchChips');
+    const breakpointBanner = document.getElementById('breakpointBanner');
+    const breakpointBannerText = document.getElementById('breakpointBannerText');
+    const statusToast = document.getElementById('statusToast');
+    const customStateInput = document.getElementById('customStateInput');
+
+    const btnFirst = document.getElementById('btnFirst');
+    const btnPlayBackward = document.getElementById('btnPlayBackward');
+    const btnStepBack = document.getElementById('btnStepBack');
+    const btnPlayPause = document.getElementById('btnPlayPause');
+    const btnStepForward = document.getElementById('btnStepForward');
+    const btnLast = document.getElementById('btnLast');
+    const btnToggleBreakpoint = document.getElementById('btnToggleBreakpoint');
+    const playbackSpeedSelect = document.getElementById('playbackSpeedSelect');
+
+    let playbackTimer = null;
+    let playbackDirection = 0; // -1 backward, 0 idle, 1 forward
+
+    function showToast(message) {
+      statusToast.textContent = message;
+      statusToast.classList.add('is-visible');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => {
+        statusToast.classList.remove('is-visible');
+      }, 3200);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+    }
+
+    function formatValue(val) {
+      if (val === undefined) return 'undefined';
+      return JSON.stringify(val);
+    }
+
+    function stopPlayback(statusLabel = 'IDLE') {
+      if (playbackTimer !== null) {
+        clearInterval(playbackTimer);
+        playbackTimer = null;
+      }
+      playbackDirection = 0;
+      playbackStatusBadge.textContent = statusLabel;
+      playbackStatusBadge.classList.remove('is-playing');
+      btnPlayPause.textContent = '▶ Play';
+      btnPlayBackward.classList.remove('is-active-dir');
+      btnPlayPause.classList.remove('is-active-dir');
+    }
+
+    function startPlayback(direction) {
+      if (store.getLength() <= 1) return;
+
+      // Toggle off if already playing in same direction
+      if (playbackTimer !== null && playbackDirection === direction) {
+        stopPlayback('PAUSED');
+        return;
+      }
+
+      stopPlayback();
+      playbackDirection = direction;
+      const intervalMs = Number(playbackSpeedSelect.value) || 700;
+
+      // Wrap to start/end if already at boundary
+      if (direction === 1 && !store.canRedo()) {
+        store.stepTo(0);
+      } else if (direction === -1 && !store.canUndo()) {
+        store.stepTo(store.getLength() - 1);
+      }
+
+      playbackStatusBadge.textContent = direction === 1 ? 'PLAYING FORWARD ▶' : 'PLAYING REVERSE ◀';
+      playbackStatusBadge.classList.add('is-playing');
+      btnPlayPause.textContent = '⏸ Pause';
+      if (direction === -1) {
+        btnPlayBackward.classList.add('is-active-dir');
+      } else {
+        btnPlayPause.classList.add('is-active-dir');
+      }
+
+      render();
+
+      playbackTimer = setInterval(() => {
+        const moved = direction === 1 ? store.redo() : store.undo();
+        if (!moved) {
+          stopPlayback(direction === 1 ? 'END OF TIMELINE' : 'START OF TIMELINE');
+          render();
+          return;
+        }
+        render();
+
+        const bpCheck = store.evaluateBreakpoint(store.currentIndex);
+        if (bpCheck.hit) {
+          stopPlayback('BREAKPOINT HIT');
+          showToast(`Paused at breakpoint: ${bpCheck.reasons.join(', ')}`);
+          render();
+        }
+      }, intervalMs);
+    }
+
+    function renderTicks(history, currentIndex) {
+      scrubberTicks.innerHTML = '';
+      const total = history.length;
+      if (total === 0) return;
+
+      history.forEach((snap, idx) => {
+        const tick = document.createElement('button');
+        tick.type = 'button';
+        tick.className = 'tick-mark';
+        if (idx === currentIndex) tick.classList.add('tick-mark--active');
+        else if (idx < currentIndex) tick.classList.add('tick-mark--visited');
+        if (store.hasBreakpoint(idx)) tick.classList.add('tick-mark--breakpoint');
+
+        const pct = total === 1 ? 0 : (idx / (total - 1)) * 100;
+        tick.style.left = `${pct}%`;
+        tick.title = `#${idx} ${snap.label}${store.hasBreakpoint(idx) ? ' [Breakpoint]' : ''}`;
+        tick.setAttribute('aria-label', `Jump to frame ${idx}: ${snap.label}`);
+        tick.innerHTML = `<span class="tick-stem"></span><span class="tick-index">${idx}</span>`;
+        tick.addEventListener('click', () => {
+          stopPlayback('PAUSED');
+          store.stepTo(idx);
+          render();
+        });
+        scrubberTicks.appendChild(tick);
+      });
+    }
+
+    function renderDiff(currentIndex) {
+      const diff = store.getDiffAt(currentIndex);
+      diffSummaryBadges.innerHTML = `
+        <span class="diff-badge diff-badge--added">+${diff.added} Added</span>
+        <span class="diff-badge diff-badge--removed">-${diff.removed} Removed</span>
+        <span class="diff-badge diff-badge--modified">~${diff.modified} Modified</span>
+      `;
+
+      if (currentIndex < 0) {
+        diffInspectorList.innerHTML = '<div class="tt-empty-note">No active snapshot to diff.</div>';
+        return;
+      }
+
+      if (diff.changes.length === 0) {
+        diffInspectorList.innerHTML = '<div class="tt-empty-note">No property changes relative to previous snapshot.</div>';
+        return;
+      }
+
+      diffInspectorList.innerHTML = diff.changes
+        .map((change) => {
+          const kindUpper = change.kind.toUpperCase();
+          const oldHtml =
+            change.kind !== 'added'
+              ? `<code class="diff-val diff-val--old">${escapeHtml(formatValue(change.oldValue))}</code>`
+              : '';
+          const arrowHtml = change.kind === 'modified' ? '<span class="diff-arrow">→</span>' : '';
+          const newHtml =
+            change.kind !== 'removed'
+              ? `<code class="diff-val diff-val--new">${escapeHtml(formatValue(change.newValue))}</code>`
+              : '';
+
+          return `
+            <div class="diff-row diff-row--${change.kind}">
+              <div class="diff-row-head">
+                <span class="diff-badge diff-badge--${change.kind}">${kindUpper}</span>
+                <span class="diff-path">${escapeHtml(change.path)}</span>
+              </div>
+              <div class="diff-row-values">${oldHtml}${arrowHtml}${newHtml}</div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    function renderWatchChips() {
+      const rules = store.getWatchRules();
+      if (rules.length === 0) {
+        watchChips.innerHTML = '<span class="tt-muted-inline">No watch expressions active</span>';
+        return;
+      }
+      watchChips.innerHTML = rules
+        .map(
+          (rule, idx) => `
+            <span class="tt-watch-chip">
+              <code>${escapeHtml(rule.path)} === ${escapeHtml(JSON.stringify(rule.expectedValue))}</code>
+              <button type="button" class="tt-watch-remove" data-remove-watch="${idx}" aria-label="Remove watch rule">×</button>
+            </span>
+          `
+        )
+        .join('');
+
+      watchChips.querySelectorAll('[data-remove-watch]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          store.removeWatchRule(Number(btn.dataset.removeWatch));
+          render();
+        });
+      });
+    }
+
+    function render() {
+      const history = store.getHistory();
+      const total = history.length;
+      const currIdx = store.currentIndex;
+      const current = store.getCurrentSnapshot();
+
+      scrubber.min = 0;
+      scrubber.max = Math.max(0, total - 1);
+      scrubber.value = currIdx >= 0 ? currIdx : 0;
+      scrubber.disabled = total === 0;
+
+      const cursorPct = total <= 1 ? 0 : (Math.max(0, currIdx) / (total - 1)) * 100;
+      frameCursor.style.left = `${cursorPct}%`;
+      frameCursor.style.display = total > 0 ? 'flex' : 'none';
+      frameCursorTag.textContent = `#${Math.max(0, currIdx)}`;
+
+      frameCounterPill.textContent = total > 0 ? `Frame ${currIdx + 1} / ${total}` : 'Frame 0 / 0';
+      snapshotCountChip.textContent = `${total} frame${total === 1 ? '' : 's'}`;
+
+      if (current) {
+        activeLabelReadout.textContent = current.label;
+        activeTimeReadout.textContent = new Date(current.timestamp).toLocaleTimeString();
+        snapshotIdChip.textContent = `id: ${current.id}`;
+        activeStateJson.textContent = JSON.stringify(current.state, null, 2);
+        customStateInput.value = JSON.stringify(current.state, null, 2);
+      } else {
+        activeLabelReadout.textContent = 'No snapshot selected';
+        activeTimeReadout.textContent = '--:--:--';
+        snapshotIdChip.textContent = 'id: --';
+        activeStateJson.textContent = '// Timeline empty';
+        customStateInput.value = '{\n  "threatLevel": "NOMINAL",\n  "activeAlerts": 0\n}';
+      }
+
+      btnFirst.disabled = total === 0 || currIdx <= 0;
+      btnStepBack.disabled = !store.canUndo();
+      btnStepForward.disabled = !store.canRedo();
+      btnLast.disabled = total === 0 || currIdx >= total - 1;
+      btnPlayPause.disabled = total <= 1;
+      btnPlayBackward.disabled = total <= 1;
+      btnToggleBreakpoint.disabled = currIdx < 0;
+      btnToggleBreakpoint.textContent = store.hasBreakpoint(currIdx)
+        ? '● Clear Breakpoint'
+        : '○ Set Breakpoint';
+
+      renderTicks(history, currIdx);
+
+      // Snapshot list
+      snapshotList.innerHTML = '';
+      if (total === 0) {
+        snapshotList.innerHTML = '<div class="tt-empty-note">Timeline is empty. Commit a snapshot or import JSON.</div>';
+      } else {
+        history.forEach((snap, idx) => {
+          const item = document.createElement('div');
+          item.className = 'tt-history-item' + (idx === currIdx ? ' is-active' : '') + (idx > currIdx ? ' is-future' : '');
+          item.setAttribute('role', 'option');
+          item.setAttribute('aria-selected', idx === currIdx ? 'true' : 'false');
+
+          const hasBp = store.hasBreakpoint(idx);
+          const watchEval = store.evaluateBreakpoint(idx);
+
+          item.innerHTML = `
+            <button type="button" class="tt-bp-dot ${hasBp ? 'is-set' : ''}" data-bp-index="${idx}" title="Toggle breakpoint on frame #${idx}" aria-label="Toggle breakpoint on frame ${idx}"></button>
+            <div class="tt-history-content">
+              <div class="tt-history-title">
+                <span class="tt-step-badge">#${idx}</span>
+                <span class="tt-snap-label">${escapeHtml(snap.label)}</span>
+              </div>
+              <div class="tt-history-sub">
+                <span>${new Date(snap.timestamp).toLocaleTimeString()}</span>
+                ${watchEval.hit ? '<span class="tt-bp-tag">BREAKPOINT</span>' : ''}
+              </div>
+            </div>
+          `;
+
+          item.querySelector('.tt-bp-dot').addEventListener('click', (e) => {
+            e.stopPropagation();
+            store.toggleBreakpoint(idx);
+            render();
+          });
+
+          item.addEventListener('click', () => {
+            stopPlayback('PAUSED');
+            store.stepTo(idx);
+            render();
+          });
+
+          snapshotList.appendChild(item);
+        });
+      }
+
+      // Breakpoint banner
+      const bpStatus = store.evaluateBreakpoint(currIdx);
+      if (bpStatus.hit) {
+        breakpointBanner.hidden = false;
+        breakpointBannerText.textContent = `Breakpoint Active at Frame #${currIdx}: ${bpStatus.reasons.join(' | ')}`;
+      } else {
+        breakpointBanner.hidden = true;
+      }
+
+      renderDiff(currIdx);
+      renderWatchChips();
+    }
+
+    // Event bindings
+    scrubber.addEventListener('input', (e) => {
+      stopPlayback('SCRUBBING');
+      store.stepTo(Number(e.target.value));
+      render();
+    });
+
+    btnFirst.addEventListener('click', () => {
+      stopPlayback('IDLE');
+      store.stepTo(0);
+      render();
+    });
+
+    btnStepBack.addEventListener('click', () => {
+      stopPlayback('STEPPED BACK');
+      store.undo();
+      render();
+    });
+
+    btnStepForward.addEventListener('click', () => {
+      stopPlayback('STEPPED FORWARD');
+      store.redo();
+      render();
+    });
+
+    btnLast.addEventListener('click', () => {
+      stopPlayback('IDLE');
+      store.stepTo(store.getLength() - 1);
+      render();
+    });
+
+    btnPlayPause.addEventListener('click', () => {
+      if (playbackTimer !== null) {
+        stopPlayback('PAUSED');
+        render();
+      } else {
+        startPlayback(1);
+      }
+    });
+
+    btnPlayBackward.addEventListener('click', () => {
+      startPlayback(-1);
+    });
+
+    playbackSpeedSelect.addEventListener('change', () => {
+      if (playbackTimer !== null) {
+        const dir = playbackDirection;
+        stopPlayback();
+        startPlayback(dir);
+      }
+    });
+
+    btnToggleBreakpoint.addEventListener('click', () => {
+      if (store.currentIndex >= 0) {
+        store.toggleBreakpoint(store.currentIndex);
+        render();
+      }
+    });
+
+    document.getElementById('watchRuleForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const path = document.getElementById('watchPathInput').value.trim();
+      const rawVal = document.getElementById('watchValueInput').value.trim();
+      if (!path) return;
+      let parsedVal = rawVal;
+      try {
+        parsedVal = JSON.parse(rawVal);
+      } catch {
+        // Keep string literal if not valid JSON
+      }
+      store.addWatchRule(path, parsedVal);
+      render();
+      showToast(`Watch breakpoint added: ${path} === ${JSON.stringify(parsedVal)}`);
+    });
+
+    document.querySelectorAll('[data-sim]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        stopPlayback('IDLE');
+        const base = store.getCurrentState() || {
+          clusterId: 'sentinel-soc-us-east-1',
+          threatLevel: 'NOMINAL',
+          activeAlerts: 0,
+          blockedIps: [],
+          quarantinedSubnets: [],
+          firewall: { wafEnabled: true, mode: 'ENFORCE', rulesCount: 4120 },
+          lastRuleTriggered: null
+        };
+        const next = structuredClone(base);
+        const type = btn.dataset.sim;
+        const randomOctet = Math.floor(10 + Math.random() * 230);
+
+        if (type === 'port-scan') {
+          next.threatLevel = 'ELEVATED';
+          next.activeAlerts = (next.activeAlerts || 0) + 1;
+          next.lastRuleTriggered = 'PORT_SWEEP_HEURISTIC';
+          store.commitSnapshot(next, `Port Scan Alert (203.0.113.${randomOctet})`);
+        } else if (type === 'block-ip') {
+          const ip = `198.51.100.${randomOctet}`;
+          next.blockedIps = [...(next.blockedIps || []), ip];
+          next.firewall.rulesCount = (next.firewall?.rulesCount || 4120) + 1;
+          next.lastRuleTriggered = 'EDGE_ACL_DENY';
+          store.commitSnapshot(next, `Blocked Malicious IP ${ip}`);
+        } else if (type === 'isolate-subnet') {
+          const subnet = `10.${randomOctet}.0.0/24`;
+          next.quarantinedSubnets = [...(next.quarantinedSubnets || []), subnet];
+          next.firewall.mode = 'STRICT_LOCKDOWN';
+          next.lastRuleTriggered = 'MICROSEGMENT_ISOLATE';
+          store.commitSnapshot(next, `Isolated Subnet ${subnet}`);
+        } else if (type === 'escalate') {
+          next.threatLevel = 'CRITICAL';
+          next.activeAlerts = (next.activeAlerts || 0) + 3;
+          next.lastRuleTriggered = 'PRIVILEGE_ESCALATION_TRAP';
+          store.commitSnapshot(next, 'Critical Intrusion Escalation');
+        } else if (type === 'resolve') {
+          next.threatLevel = 'NOMINAL';
+          next.activeAlerts = 0;
+          next.quarantinedSubnets = [];
+          next.firewall.mode = 'ENFORCE';
+          next.lastRuleTriggered = 'POSTURE_RESTORED';
+          store.commitSnapshot(next, 'Resolved Incident — Nominal Posture');
+        }
+        render();
+      });
+    });
+
+    document.getElementById('customCommitForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      stopPlayback('IDLE');
+      const label = document.getElementById('customLabelInput').value.trim();
+      const rawJson = customStateInput.value;
+      try {
+        const parsed = JSON.parse(rawJson);
+        store.commitSnapshot(parsed, label || 'Custom State');
+        document.getElementById('customLabelInput').value = '';
+        render();
+        showToast('Committed custom immutable snapshot.');
+      } catch (err) {
+        showToast(`Invalid JSON state: ${err.message}`);
+      }
+    });
+
+    document.getElementById('exportJsonBtn').addEventListener('click', () => {
+      const json = store.exportHistory();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sentinel-time-travel-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${store.getLength()} immutable snapshots to JSON.`);
+    });
+
+    const importFileInput = document.getElementById('importFileInput');
+    document.getElementById('importJsonBtn').addEventListener('click', () => {
+      importFileInput.click();
+    });
+
+    importFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        stopPlayback('IDLE');
+        const text = await file.text();
+        const result = store.importHistory(text);
+        render();
+        showToast(`Imported ${result.count} snapshots (cursor at #${result.currentIndex}).`);
+      } catch (err) {
+        showToast(`Import failed: ${err.message}`);
+      } finally {
+        importFileInput.value = '';
+      }
+    });
+
+    document.getElementById('resetTimelineBtn').addEventListener('click', () => {
+      stopPlayback('CLEARED');
+      store.clear();
+      render();
+      showToast('Timeline cleared.');
+    });
+
+    render();
+  </script>
+</body>
+</html>
