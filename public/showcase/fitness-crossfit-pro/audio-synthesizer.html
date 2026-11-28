@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PULSE-WOD // Sound board</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="audio-synthesizer.css" />
+</head>
+<body class="sound-page">
+  <header class="glass-nav">
+    <div class="brand"><span>PULSE-WOD</span></div>
+    <a class="badge" href="index.html">Back to showcase</a>
+  </header>
+
+  <main class="sound-main">
+    <h1>Gym floor sound board</h1>
+    <p>Cues for the timer and the interface, generated in your browser.</p>
+
+    <section class="sound-grid" aria-label="Sounds">
+      <button type="button" data-cue="countdown">3-2-1 Go</button>
+      <button type="button" data-cue="success">Personal record</button>
+      <button type="button" data-cue="warning">Ten seconds left</button>
+      <button type="button" data-cue="error">No rep</button>
+      <button type="button" data-cue="navigate">Next movement</button>
+      <button type="button" data-cue="tap">Button tap</button>
+    </section>
+
+    <div class="sound-controls">
+      <label>Volume <input id="volume" type="range" min="0" max="100" value="50" /></label>
+      <label><input id="mute" type="checkbox" /> Mute</label>
+    </div>
+
+    <canvas id="scope" width="640" height="160" aria-label="Waveform of the playing sound" role="img"></canvas>
+    <p id="sound-status" role="status">Pick a sound</p>
+  </main>
+
+  <script type="module" src="audio-synthesizer.js"></script>
+</body>
+</html>
