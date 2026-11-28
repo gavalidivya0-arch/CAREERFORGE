@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raft Consensus Engine — Gaming Esports Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="raft-consensus.css" />
+</head>
+<body>
+  <main class="raft-shell" data-gaming-esports-hub-raft>
+    <header class="raft-header">
+      <div class="header-top-row">
+        <a class="back-link" href="index.html">← Vortex Arena Hub</a>
+        <span class="engine-badge">DISTRIBUTED CONSENSUS // RAFT STATE MACHINE</span>
+      </div>
+      <h1>RAFT CONSENSUS &amp; LEADER ELECTION CLUSTER</h1>
+      <p class="subtitle">
+        Simulated fault-tolerant match-authority cluster modeling Leader, Follower, and Candidate transitions,
+        randomized election timeouts, RequestVote RPCs, and majority-quorum log replication.
+      </p>
+
+      <div class="telemetry-strip" aria-label="Cluster telemetry">
+        <div class="telemetry-pill">
+          <span class="pill-label">CURRENT TERM</span>
+          <strong class="pill-value term-val" id="term-counter">0</strong>
+        </div>
+        <div class="telemetry-pill">
+          <span class="pill-label">ACTIVE LEADER</span>
+          <strong class="pill-value leader-val" id="active-leader-badge">NO LEADER</strong>
+        </div>
+        <div class="telemetry-pill">
+          <span class="pill-label">MAJORITY QUORUM</span>
+          <strong class="pill-value quorum-val" id="quorum-badge">3 / 5</strong>
+        </div>
+        <div class="telemetry-pill legend-pill">
+          <span class="legend-dot dot-leader"></span> Leader
+          <span class="legend-dot dot-follower"></span> Follower
+          <span class="legend-dot dot-candidate"></span> Candidate
+          <span class="legend-dot dot-dead"></span> Offline
+        </div>
+      </div>
+    </header>
+
+    <section class="control-bar" aria-label="Cluster controls">
+      <div class="control-group">
+        <button type="button" id="btn-cluster-3" class="btn-control">3-Node Cluster</button>
+        <button type="button" id="btn-cluster-5" class="btn-control">5-Node Cluster</button>
+        <button type="button" id="btn-kill-node" class="btn-control btn-danger">Kill Node</button>
+        <button type="button" id="btn-partition-toggle" class="btn-control btn-warn">Partition Network</button>
+      </div>
+      <div class="control-group">
+        <button type="button" id="btn-send-heartbeat" class="btn-control">Send Heartbeats</button>
+        <button type="button" id="btn-step-tick" class="btn-control">Step Tick (+60ms)</button>
+        <button type="button" id="btn-split-vote" class="btn-control">Simulate Split Vote</button>
+        <button type="button" id="btn-auto-toggle" class="btn-control btn-accent">Start Auto-Tick</button>
+        <button type="button" id="btn-reset-cluster" class="btn-control">Reset</button>
+      </div>
+    </section>
+
+    <div class="workspace-grid">
+      <section class="topology-panel" aria-labelledby="topology-title">
+        <div class="panel-heading">
+          <h2 id="topology-title">Cluster Topology &amp; RPC Packet Flow</h2>
+          <span class="panel-hint">Click any node to select it for failure/election controls</span>
+        </div>
+        <div class="topology-stage">
+          <svg id="cluster-topology" viewBox="0 0 760 400" role="img" aria-label="Raft cluster node diagram"></svg>
+          <div id="packet-layer" class="packet-layer" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <aside class="log-panel" aria-labelledby="log-title">
+        <div class="panel-heading">
+          <h2 id="log-title">Log Replication Viewer</h2>
+          <span class="panel-hint">Majority commit cycle</span>
+        </div>
+
+        <form id="log-command-form" class="command-form">
+          <input
+            type="text"
+            id="log-command-input"
+            maxlength="48"
+            placeholder="Command (blank = esports preset)"
+            aria-label="Command to replicate"
+          />
+          <button type="submit" class="btn-control btn-accent">Replicate Log</button>
+        </form>
+
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Idx</th>
+                <th>Term</th>
+                <th>Command</th>
+                <th>Replicas</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="log-replication-body"></tbody>
+          </table>
+        </div>
+      </aside>
+    </div>
+
+    <section class="nodes-section" aria-labelledby="nodes-title">
+      <div class="panel-heading">
+        <h2 id="nodes-title">Node State Cards</h2>
+        <span class="panel-hint">Leader (Gold) · Follower (Cyan) · Candidate (Purple)</span>
+      </div>
+      <div id="node-cards" class="node-cards-grid"></div>
+    </section>
+
+    <section class="events-section" aria-labelledby="events-title">
+      <div class="panel-heading">
+        <h2 id="events-title">Consensus Event &amp; RPC Timeline</h2>
+      </div>
+      <ul id="cluster-event-log" class="event-feed" aria-live="polite"></ul>
+    </section>
+  </main>
+
+  <script type="module" src="raft-consensus.js"></script>
+</body>
+</html>
