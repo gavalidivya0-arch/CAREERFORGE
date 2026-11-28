@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Health &amp; Vitality — Binary Heap Priority Event Queue &amp; Dispatcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./priority-queue.css" />
+</head>
+<body>
+  <main class="queue-container" data-priority-queue-lab>
+    <header class="queue-header">
+      <a href="index.html" class="back-link">&larr; Back to Health &amp; Vitality</a>
+      <div class="header-badge">HEALTH VITALITY • BIOMETRIC TRIAGE ENGINE</div>
+      <h1>Binary Heap Priority Event Queue &amp; <span>Dispatcher</span></h1>
+      <p class="subtitle">
+        In-memory binary max-heap with strict FIFO tie-breaking, token-bucket dispatch pacing, and live backpressure telemetry for clinical alerts and wearable streams.
+      </p>
+
+      <div class="status-summary-bar" aria-label="Queue telemetry metrics">
+        <div class="summary-chip">
+          <span class="chip-label">Queue Depth</span>
+          <strong id="depth-val">0 / 20</strong>
+        </div>
+        <div class="summary-chip">
+          <span class="chip-label">Next Peeked</span>
+          <strong id="top-priority-val">None</strong>
+        </div>
+        <div class="summary-chip">
+          <span class="chip-label">Dispatched</span>
+          <strong id="dispatched-count-val">0</strong>
+        </div>
+        <div class="summary-chip">
+          <span class="chip-label">Dropped (Backpressure)</span>
+          <strong id="dropped-count-val">0</strong>
+        </div>
+        <div class="summary-chip">
+          <span class="chip-label">Avg Wait</span>
+          <strong id="avg-wait-val">0 ms</strong>
+        </div>
+        <div class="summary-chip">
+          <span class="chip-label">Dispatcher</span>
+          <strong id="dispatcher-status-val">Active</strong>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-layout-grid">
+      <section class="control-panel" aria-label="Enqueue and dispatcher controls">
+        <div class="panel-card">
+          <h2>Enqueue Clinical Event</h2>
+          <form id="enqueue-form" class="enqueue-form">
+            <label for="task-payload" class="field-label">Event Payload / Biometric Signal</label>
+            <input
+              id="task-payload"
+              class="form-input"
+              required
+              maxlength="140"
+              placeholder="e.g. ECG Arrhythmia Spike — ICU Bed 04"
+              value="ECG Arrhythmia Spike — ICU Bed 04"
+            />
+
+            <div class="form-row">
+              <div class="form-col">
+                <label for="priority-rank" class="field-label">Priority Rank</label>
+                <select id="priority-rank" class="form-select">
+                  <option value="4" selected>Urgent (Rank 4)</option>
+                  <option value="3">High (Rank 3)</option>
+                  <option value="2">Normal (Rank 2)</option>
+                  <option value="1">Low (Rank 1)</option>
+                </select>
+              </div>
+
+              <div class="form-col">
+                <label for="preset-select" class="field-label">Clinical Presets</label>
+                <select id="preset-select" class="form-select">
+                  <option value="" disabled selected>Select telemetry preset...</option>
+                  <option value="CRITICAL: Cardiac Telemetry Code Blue — Bed 02|4">Cardiac Code Blue (Urgent)</option>
+                  <option value="SpO2 Desaturation Warning (<90%) — Ward 3|3">SpO2 Desaturation (High)</option>
+                  <option value="Continuous Glucose Telemetry Sync — Patient #418|2">Glucose Sync (Normal)</option>
+                  <option value="Wearable Sleep Recovery Heartbeat — Outpatient #19|1">Wearable Heartbeat (Low)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="primary-btn">Enqueue to Binary Heap</button>
+              <button id="burst-btn" type="button" class="burst-btn">Simulate 6x Burst</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel-card">
+          <div class="card-title-row">
+            <h2>Live Queue Depth &amp; Rate Pacing</h2>
+            <span id="backpressure-status-val" class="bp-pill bp-nominal">Nominal</span>
+          </div>
+
+          <div class="gauge-section">
+            <div class="gauge-header">
+              <span>Heap Backpressure Gauge (70% High-Watermark)</span>
+              <span id="gauge-percent" class="mono-val">0%</span>
+            </div>
+            <div class="progress-bar-track" role="progressbar" aria-label="Queue depth utilization">
+              <div id="depth-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="rate-control-section">
+            <div class="slider-label-row">
+              <label for="rate-slider">Token-Bucket Dispatch Interval</label>
+              <span id="rate-slider-val" class="rate-badge">650 ms / event</span>
+            </div>
+            <input
+              id="rate-slider"
+              type="range"
+              min="150"
+              max="2500"
+              step="50"
+              value="650"
+              class="rate-slider"
+            />
+            <div class="slider-ticks">
+              <span>Fast (150ms)</span>
+              <span>Balanced (650ms)</span>
+              <span>Slow (2.5s)</span>
+            </div>
+          </div>
+
+          <div class="dispatcher-action-btns">
+            <button id="toggle-dispatch-btn" type="button" class="toggle-btn active-state">Pause Dispatcher</button>
+            <button id="dequeue-manual-btn" type="button" class="secondary-btn">Manual Dequeue</button>
+            <button id="clear-queue-btn" type="button" class="danger-btn">Clear Queue</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="display-panel" aria-label="Heap state and processed stream">
+        <div class="panel-card">
+          <div class="card-title-row">
+            <h2>Pending Binary Heap Array</h2>
+            <span id="heap-nodes-count" class="meta-tag">0 queued</span>
+          </div>
+          <div id="heap-nodes-list" class="heap-nodes-list">
+            <p class="empty-hint">Heap is currently empty. Enqueue telemetry events to inspect binary heap ordering.</p>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="card-title-row">
+            <h2>Processed Event Feed</h2>
+            <span id="feed-count" class="meta-tag">0 processed</span>
+          </div>
+          <div id="event-feed" class="event-feed-list" aria-live="polite">
+            <p class="empty-hint">Dispatched clinical events will stream here in prioritized order.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./priority-queue.js"></script>
+</body>
+</html>
