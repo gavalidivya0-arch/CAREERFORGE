@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biotech Genomics — Distributed Raft Consensus &amp; Leader Election</title>
+  <link rel="stylesheet" href="./raft-consensus.css">
+</head>
+<body>
+  <main class="raft-container" data-raft-lab>
+    <header class="raft-header">
+      <div class="header-badge">GENOME-CONSENSUS-RAFT · v1.0</div>
+      <h1>Distributed Raft Consensus &amp; Leader Election</h1>
+      <p class="subtitle">
+        Fault-tolerant sequencing cluster engine modelling Leader, Follower, and Candidate roles,
+        randomized election timeouts, RequestVote exchanges, and quorum-committed genomic ledger replication.
+      </p>
+
+      <div class="cluster-status-bar">
+        <div class="status-chip" id="term-chip">
+          <span class="chip-label">Election Term</span>
+          <strong id="current-term-val">1</strong>
+        </div>
+        <div class="status-chip" id="leader-chip">
+          <span class="chip-label">Leader</span>
+          <strong id="current-leader-val">None</strong>
+        </div>
+        <div class="status-chip" id="quorum-chip">
+          <span class="chip-label">Quorum</span>
+          <strong id="quorum-val">3 of 5 nodes</strong>
+        </div>
+        <div class="status-chip" id="logs-chip">
+          <span class="chip-label">Committed Entries</span>
+          <strong id="committed-logs-val">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <section class="controls-toolbar" aria-label="Cluster controls">
+      <div class="toolbar-group">
+        <label for="cluster-size">Cluster Size</label>
+        <select id="cluster-size" class="control-select">
+          <option value="5" selected>5-Node Cluster (Quorum 3)</option>
+          <option value="3">3-Node Cluster (Quorum 2)</option>
+        </select>
+      </div>
+
+      <div class="toolbar-buttons">
+        <button type="button" id="election-btn" class="action-btn election-btn">Trigger Election</button>
+        <button type="button" id="heartbeat-btn" class="action-btn heartbeat-btn">Send Heartbeats</button>
+        <button type="button" id="kill-leader-btn" class="action-btn kill-btn">Kill Leader</button>
+        <button type="button" id="partition-btn" class="action-btn partition-btn">Partition Minority Nodes</button>
+        <button type="button" id="reset-btn" class="action-btn reset-btn">Reset Cluster</button>
+      </div>
+    </section>
+
+    <section class="log-input-section" aria-label="Log replication command">
+      <label for="command-input">Genomic Ledger Command</label>
+      <div class="input-row">
+        <input
+          id="command-input"
+          class="command-input"
+          type="text"
+          value="RECORD_VARIANT: gene=BRCA1 chr=17 pos=43094464 ref=C alt=T sample=GS-204"
+          placeholder="Enter a genomic command to replicate..."
+        >
+        <button type="button" id="replicate-btn" class="primary-btn">Replicate &amp; Commit</button>
+      </div>
+      <p id="replicate-status" class="replicate-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="cluster-diagram-section" aria-label="Cluster topology">
+      <div class="section-title">
+        <h2>Sequencing Cluster Topology</h2>
+        <span class="legend-items">
+          <span class="legend-badge leader-glow">Leader</span>
+          <span class="legend-badge follower-glow">Follower</span>
+          <span class="legend-badge candidate-glow">Candidate</span>
+          <span class="legend-badge dead-glow">Failed</span>
+          <span class="legend-badge partitioned-glow">Partitioned</span>
+        </span>
+      </div>
+
+      <div class="nodes-stage">
+        <div id="nodes-container" class="nodes-grid"></div>
+        <div id="packet-overlay" class="packet-overlay" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="log-viewer-section" aria-label="Replicated log viewer">
+      <div class="viewer-header">
+        <h2>Replicated Genomic Ledger</h2>
+        <span id="log-count-tag" class="count-tag">0 entries committed</span>
+      </div>
+      <div class="log-table-wrapper">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Index</th>
+              <th>Term</th>
+              <th>Command Payload</th>
+              <th>Status</th>
+              <th>Replicated Nodes</th>
+            </tr>
+          </thead>
+          <tbody id="log-entries-body">
+            <tr>
+              <td colspan="5" class="empty-log-msg">No genomic ledger entries committed yet. Submit a command above.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./raft-consensus.js"></script>
+</body>
+</html>
