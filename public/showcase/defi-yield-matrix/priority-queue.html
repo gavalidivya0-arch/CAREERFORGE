@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DefiYieldMatrix Priority Queue - Binary Heap & Backpressure Dispatcher</title>
+  <link rel="stylesheet" href="priority-queue.css">
+</head>
+<body>
+  <div class="pq-container">
+    <header class="pq-header">
+      <div class="pq-badge-tag">DeFiYieldMatrix</div>
+      <h1>Priority Event Queue</h1>
+      <p>Binary min-heap with token-bucket dispatch pacing and backpressure metrics</p>
+    </header>
+
+    <main class="pq-main">
+      <section class="pq-enqueue">
+        <h2>Enqueue Event</h2>
+        <form id="enqueueForm" novalidate>
+          <div class="pq-form-group">
+            <label for="payloadInput">Payload</label>
+            <input type="text" id="payloadInput" placeholder="Event data (e.g. trade, signal)" required>
+          </div>
+          <div class="pq-form-group">
+            <label for="priorityInput">Priority Rank</label>
+            <input type="number" id="priorityInput" min="0" max="10" value="3" required>
+            <small>Lower = Higher priority. 0 = Urgent, 5 = Normal, 10 = Low</small>
+          </div>
+          <button type="submit" class="pq-btn">Dispatch Event</button>
+        </form>
+      </section>
+
+      <section class="pq-metrics">
+        <h2>Live Queue Depth</h2>
+        <div class="pq-depth-bar">
+          <div class="pq-depth-fill" id="depthFill" style="width: 0%">0 items</div>
+        </div>
+        <span class="pq-depth-value" id="depthValue">0</span>
+      </section>
+    </main>
+
+    <aside class="pq-dispatcher">
+      <h2>Dispatch Rate</h2>
+      <input type="range" id="rateSlider" min="10" max="2000" value="500">
+      <div class="pq-rate-value" id="rateValue">500 ms</div>
+      <p class="pq-rate-caption">Lower = Faster dispatch</p>
+    </aside>
+  </div>
+
+  <section class="pq-event-feed">
+    <h2>Processed Events</h2>
+    <div class="pq-feed-list" id="eventList"></div>
+  </section>
+
+  <script type="module" src="priority-queue.js"></script>
+</body>
+</html>

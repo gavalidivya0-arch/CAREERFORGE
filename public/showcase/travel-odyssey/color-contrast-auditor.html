@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Odyssey Colour Contrast Auditor</title>
+  <link rel="stylesheet" href="color-contrast-auditor.css">
+</head>
+<body>
+  <main>
+    <a href="index.html">&larr; Back to Odyssey</a>
+    <h1>Colour contrast auditor</h1>
+    <p>Check that itinerary and booking colours stay readable under WCAG 2.1.</p>
+    <section class="pickers">
+      <fieldset>
+        <legend>Text</legend>
+        <input type="color" id="fg-picker" value="#e2e8f0" aria-label="Pick text colour">
+        <input id="fg-hex" value="#e2e8f0" aria-label="Text colour hex" spellcheck="false">
+      </fieldset>
+      <fieldset>
+        <legend>Background</legend>
+        <input type="color" id="bg-picker" value="#0a0f14" aria-label="Pick background colour">
+        <input id="bg-hex" value="#0a0f14" aria-label="Background colour hex" spellcheck="false">
+      </fieldset>
+      <button type="button" id="swap">Swap colours</button>
+    </section>
+    <p id="error" role="alert"></p>
+    <div role="status">Contrast ratio <output id="ratio">--</output></div>
+    <meter id="gauge" min="0" max="21" low="3" high="4.5" optimum="21" aria-label="Contrast ratio out of 21"></meter>
+    <ul id="results"></ul>
+    <div id="preview">
+      <h2>Patagonia ice field trek</h2>
+      <p>Normal text sample: departures leave on the first Monday of each month.</p>
+    </div>
+  </main>
+  <script type="module" src="color-contrast-auditor.js"></script>
+</body>
+</html>

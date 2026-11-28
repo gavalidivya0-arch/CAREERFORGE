@@ -1,4 +1,369 @@
-:root { --bg: #0b0f19; --card: #111827; --text: #f9fafb; --accent: #818cf8; }
-body { background: var(--bg); color: var(--text); padding: 2rem; font-family: system-ui, sans-serif; }
-.limiter-container { max-width: 900px; margin: 0 auto; }
-h1 { color: var(--accent); }
+/* ==========================================================================
+   TravelOdyssey Rate Limiter - CSS
+   Liquid bucket reservoir animation, status badges, telemetry metrics
+   ========================================================================== */
+
+/* --- Root Variables --- */
+:root {
+  --bg: #0b0f19;
+  --card: #111827;
+  --text: #f9fafb;
+  --muted: #6b7280;
+  --accent: #818cf8;
+  --accent-glow: rgba(129, 140, 248, 0.4);
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --border: #1e293b;
+}
+
+/* --- Page Base --- */
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 2rem;
+  line-height: 1.6;
+}
+
+/* --- Container --- */
+.limiter-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* --- Controls Section --- */
+.controls-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.controls-section h2 {
+  margin: 0 0 1rem 0;
+  color: var(--accent);
+  font-size: 1.25rem;
+}
+
+.control-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.control-btn {
+  font: inherit;
+  background: var(--accent);
+  color: #10232e;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.control-btn:hover:not(:disabled) {
+  background: #6b46c1;
+  transform: translateY(-1px);
+}
+
+.control-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.control-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.flood-btn {
+  grid-column: span 2;
+  background: var(--error);
+  color: white;
+}
+
+.flood-btn:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.stop-btn {
+  background: var(--muted);
+  color: var(--text);
+}
+
+.stop-btn:hover:not(:disabled) {
+  background: #4a5568;
+}
+
+.enqueue-btn {
+  background: var(--success);
+  color: white;
+}
+
+.enqueue-btn:hover:not(:disabled) {
+  background: #16a34a;
+}
+
+.tick-btn {
+  background: #3182ce;
+  color: white;
+}
+
+.tick-btn:hover:not(:disabled) {
+  background: #2c5282;
+}
+
+.cancel-btn {
+  background: var(--warning);
+  color: #1a202c;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: #d97706;
+}
+
+/* --- Bucket Visualization Section --- */
+.bucket-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.bucket-section h2 {
+  margin: 0 0 1rem 0;
+  color: var(--accent);
+  font-size: 1.25rem;
+}
+
+.bucket-wrapper {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.liquid-bucket {
+  position: relative;
+  width: 200px;
+  height: 300px;
+}
+
+.bucket-outline {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.liquid-level {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  fill: var(--accent);
+  transition: height 0.25s ease-out;
+}
+
+.token-label {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.refill-line {
+  stroke: var(--muted);
+}
+
+/* Bucket info panel */
+.bucket-info {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  min-width: 140px;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.metric-row:last-child {
+  margin-bottom: 0;
+}
+
+.metric-label {
+  color: var(--muted);
+}
+
+.metric-value {
+  color: var(--accent);
+  font-family: ui-monospace, monospace;
+}
+
+/* --- Event Log Section --- */
+.event-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.event-section h2 {
+  margin: 0 0 1rem 0;
+  color: var(--accent);
+  font-size: 1.25rem;
+}
+
+.log-viewer {
+  height: 150px;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* Log entries */
+.log-entry {
+  padding: 2px 4px;
+  margin: 2px 0;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  white-space: pre;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.log-entry.accepted {
+  color: var(--success);
+  border-bottom: 1px solid var(--success);
+}
+
+.log-entry.throttled {
+  color: var(--error);
+  border-bottom: 1px solid var(--error);
+}
+
+.log-entry.refilled {
+  color: var(--warning);
+  border-bottom: 1px solid var(--warning);
+}
+
+.log-entry.queue {
+  color: var(--accent);
+}
+
+/* --- Metrics Summary Section --- */
+.metrics-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.metrics-section h2 {
+  margin: 0 0 1rem 0;
+  color: var(--accent);
+  font-size: 1.25rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.metric-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.metric-card .metric-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+}
+
+.metric-card.accepted .metric-value {
+  color: var(--success);
+}
+
+.metric-card.throttled .metric-value {
+  color: var(--error);
+}
+
+.metric-card.completed .metric-value {
+  color: var(--muted);
+}
+
+.metric-card.cancelled .metric-value {
+  color: var(--warning);
+}
+
+.metric-card .metric-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* --- Animations --- */
+
+/* Liquid level fill animation */
+@keyframes fillLiquid {
+  from { height: 0%; }
+  to { height: 100%; }
+}
+
+/* Pulse on new events */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.log-entry.new {
+  animation: pulse 0.8s ease-out;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 640px) {
+  body {
+    padding: 1rem;
+  }
+
+  .control-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .flood-btn {
+    grid-column: auto;
+  }
+}

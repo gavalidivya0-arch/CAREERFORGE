@@ -77,4 +77,19 @@ export class HealthVitalityTrieEngine {
     for (const [letter, child] of children(this.root)) visit(child, letter, first);
     return results.sort((a, b) => a.distance - b.distance || normalized(a.word).localeCompare(normalized(b.word), 'en'));
   }
+  /** Returns all complete words in the trie, sorted case-insensitively. */
+  getAllWords() {
+    const words = [];
+    const visit = (current) => {
+      if (current.word !== null) words.push(current.word);
+      for (const [, child] of children(current)) visit(child);
+    };
+    visit(this.root);
+    return words.sort((a, b) => normalized(a).localeCompare(normalized(b), 'en'));
+  }
+  /** Returns true if the trie contains an exact word match (case-insensitive). */
+  contains(word) {
+    const node = this.locate(word);
+    return node !== null && node.word !== null;
+  }
 }

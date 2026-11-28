@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Luxury Realms — Cryptographic Merkle Proof Verifier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="merkle-verifier.css" />
+</head>
+<body>
+  <main class="merkle-shell">
+    <header class="merkle-header">
+      <div>
+        <div class="brand-kicker">AURA REALMS • CRYPTOGRAPHIC INTEGRITY ENGINE</div>
+        <h1>Merkle Title &amp; Custody Verifier</h1>
+        <p class="subtitle">
+          Deterministic SHA-256 binary hash tree builder, audit-path generator, and sub-millisecond inclusion verifier.
+        </p>
+      </div>
+      <div class="header-status">
+        <span id="rootStatusPill" class="root-status-pill status-idle">INITIALIZING</span>
+        <div class="root-hash-box">
+          <span class="root-label">ANCHORED MERKLE ROOT (SHA-256)</span>
+          <code id="rootHashDisplay" class="root-hash-code">—</code>
+        </div>
+      </div>
+    </header>
+
+    <section class="metrics-strip" aria-label="Merkle tree telemetry">
+      <div class="metric-tile">
+        <span class="metric-label">Tree Depth</span>
+        <strong id="treeDepthMetric" class="metric-value">0 levels</strong>
+      </div>
+      <div class="metric-tile">
+        <span class="metric-label">Anchored Leaves</span>
+        <strong id="leafCountMetric" class="metric-value">0 leaves</strong>
+      </div>
+      <div class="metric-tile">
+        <span class="metric-label">Build + Verify Time</span>
+        <strong id="execTimeMetric" class="metric-value">&lt; 0.01 ms</strong>
+      </div>
+    </section>
+
+    <div class="workspace-grid">
+      <!-- Dataset Input Container -->
+      <section id="datasetContainer" class="panel dataset-panel" aria-labelledby="datasetHeading">
+        <div class="panel-header">
+          <h2 id="datasetHeading">1. Sovereign Asset Dataset</h2>
+          <button type="button" id="resetDatasetBtn" class="btn btn-ghost">Restore Default</button>
+        </div>
+        <p class="panel-hint">Each line represents an immutable luxury asset deed, aviation log, or escrow record hashed via SHA-256.</p>
+
+        <div class="quick-add-row">
+          <input
+            type="text"
+            id="newRecordInput"
+            placeholder="Append new deed or escrow record..."
+            aria-label="New asset record"
+          />
+          <button type="button" id="addRecordBtn" class="btn btn-secondary">Append</button>
+        </div>
+
+        <label for="datasetInput" class="field-label">Leaf Records (one record per line)</label>
+        <textarea id="datasetInput" rows="7" spellcheck="false"></textarea>
+
+        <div class="panel-actions">
+          <button type="button" id="buildTreeBtn" class="btn btn-primary">Build Merkle Tree</button>
+        </div>
+      </section>
+
+      <!-- Proof Verification Status Card -->
+      <section id="proofStatusCard" class="panel proof-status-card" aria-labelledby="proofHeading">
+        <div class="panel-header">
+          <h2 id="proofHeading">2. Inclusion Proof &amp; Tamper Audit</h2>
+          <span id="verificationBadge" class="verification-badge status-idle">PENDING</span>
+        </div>
+
+        <div class="proof-controls">
+          <label for="leafSelect" class="field-label">Select Leaf Index for Audit Path</label>
+          <select id="leafSelect"></select>
+
+          <label for="claimedLeafInput" class="field-label">Claimed Leaf Payload (verify or tamper)</label>
+          <input type="text" id="claimedLeafInput" spellcheck="false" />
+
+          <div class="button-cluster">
+            <button type="button" id="verifyProofBtn" class="btn btn-primary">Verify Proof</button>
+            <button type="button" id="simulateTamperBtn" class="btn btn-danger">Simulate Tamper</button>
+            <button type="button" id="restoreLeafBtn" class="btn btn-ghost">Restore Authentic</button>
+          </div>
+        </div>
+
+        <div id="verificationSummary" class="verification-summary">
+          Awaiting proof evaluation.
+        </div>
+
+        <div class="root-comparison">
+          <div class="compare-row">
+            <span class="compare-label">Anchored Root:</span>
+            <code id="expectedRootValue" class="compare-hash">—</code>
+          </div>
+          <div class="compare-row">
+            <span class="compare-label">Computed Root:</span>
+            <code id="computedRootValue" class="compare-hash">—</code>
+          </div>
+        </div>
+
+        <div class="audit-path-block">
+          <h3>Cryptographic Audit Path</h3>
+          <ol id="auditPathList" class="audit-path-list"></ol>
+        </div>
+      </section>
+    </div>
+
+    <!-- Tree Depth Visualizer -->
+    <section class="panel visualizer-panel" aria-labelledby="visualizerHeading">
+      <div class="panel-header">
+        <div>
+          <h2 id="visualizerHeading">3. Hierarchical Merkle Tree Depth Visualizer</h2>
+          <p class="panel-hint">
+            Root to leaves topology. Active verification path glows emerald (verified) or crimson (tampered); proof siblings highlight in amber.
+          </p>
+        </div>
+        <div class="legend" aria-label="Node state legend">
+          <span class="legend-item"><i class="dot dot-verified"></i>Verified Path</span>
+          <span class="legend-item"><i class="dot dot-sibling"></i>Audit Sibling</span>
+          <span class="legend-item"><i class="dot dot-tampered"></i>Tampered Path</span>
+        </div>
+      </div>
+
+      <div id="treeVisualizer" class="tree-visualizer"></div>
+    </section>
+  </main>
+
+  <script type="module" src="merkle-verifier.js"></script>
+</body>
+</html>

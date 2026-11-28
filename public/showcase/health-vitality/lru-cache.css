@@ -1,4 +1,317 @@
-:root { --bg: #0b0f19; --card: #111827; --text: #f9fafb; --accent: #818cf8; }
-body { background: var(--bg); color: var(--text); padding: 2rem; font-family: system-ui, sans-serif; }
-.lru-container { max-width: 900px; margin: 0 auto; }
-h1 { color: var(--accent); }
+:root {
+  --bg: #0b0f19;
+  --card: #111827;
+  --text: #f9fafb;
+  --accent: #818cf8;
+  --muted: #6b7280;
+  --success: #22c55e;
+  --danger: #f87171;
+  --warning: #eab308;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 2rem;
+}
+
+.lru-container {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* Controls Panel */
+.lru-controls {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #334155;
+}
+
+.control-group {
+  margin-bottom: 1rem;
+}
+
+.control-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.control-group input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.capacity-value {
+  margin-left: 0.5rem;
+  color: var(--accent);
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+/* Put Button */
+.btn-primary {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
+}
+
+.btn-primary:hover {
+  background: #63a4f0;
+}
+
+/* Cache Display */
+.lru-display {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #334155;
+}
+
+.lru-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.memory-occupancy {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.memory-occupancy.high {
+  color: var(--success);
+}
+
+.memory-occupancy.medium {
+  color: var(--warning);
+}
+
+/* Node Chain Diagram */
+.lru-nodes {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) var(--card);
+}
+
+.lru-nodes::-webkit-scrollbar {
+  height: 6px;
+}
+
+.lru-nodes::-webkit-scrollbar-track {
+  background: var(--card);
+}
+
+.lru-nodes::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  min-height: 60px;
+  padding: 8px 12px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* LRU Position Indicators */
+.node.lru {
+  border-color: var(--danger);
+  animation: pulse-lru 2s ease-in-out infinite;
+}
+
+.node.mru {
+  border-color: var(--success);
+  box-shadow: 0 0 12px var(--success33);
+}
+
+.node.mru::after {
+  content: '🔖';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 0.65rem;
+  background: var(--success);
+  color: var(--bg);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 18px;
+}
+
+/* Head and Tail badges */
+.node.head {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, #a5f3fc, #67e8f9);
+  color: #0c4a6e;
+  font-weight: 700;
+}
+
+.node.tail {
+  border-color: var(--muted);
+  background: #334155;
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.node.head::after,
+.node.tail::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.node.head::after {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.node.tail::after {
+  background: var(--muted);
+}
+
+/* Animations */
+@keyframes pulse-lru {
+  0%, 100% { border-color: var(--danger); box-shadow: 0 0 8px var(--danger33); }
+  50% { border-color: var(--warning); box-shadow: 0 0 12px var(--warning33); }
+}
+
+@keyframes node-fade-out {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(20px); }
+}
+
+@keyframes node-fade-in {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Eviction Animation */
+.node.evicting {
+  animation: node-fade-out 0.3s ease forwards;
+}
+
+.node.evicted {
+  opacity: 0.3;
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* New node entering */
+.node.new-entry {
+  animation: node-fade-in 0.3s ease forwards;
+}
+
+/* Eviction Log */
+.lru-eviction {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #334155;
+  margin-top: 2rem;
+}
+
+.lru-eviction h3 {
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.eviction-log {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 0.75rem;
+}
+
+.eviction-log li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+  color: var(--text);
+}
+
+.eviction-log li:last-child {
+  border-bottom: none;
+}
+
+.eviction-log .key {
+  color: var(--accent);
+}
+
+.eviction-log .timestamp {
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
+.eviction-log .empty-log {
+  color: var(--muted);
+  font-style: italic;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Memory Occupancy Bar */
+.memory-bar {
+  width: 100%;
+  height: 8px;
+  background: #334155;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.memory-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.memory-bar-fill.low {
+  background: var(--muted);
+}
+
+.memory-bar-fill.medium {
+  background: var(--warning);
+}
+
+.memory-bar-fill.high {
+  background: var(--danger);
+}

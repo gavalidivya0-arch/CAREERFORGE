@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Waveform — Podcast Audio Stream Time-Travel Debugger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="snapshot-time-travel.css" />
+</head>
+<body>
+  <main class="tt-shell">
+    <header class="tt-header">
+      <div class="tt-brand">
+        <span class="tt-eyebrow">PODCAST AUDIO STREAM • LEVEL 3 ENGINE</span>
+        <h1>Immutable State Snapshot &amp; Time-Travel Debugger</h1>
+        <p class="tt-subtitle">Bidirectional scrub playback, property-level diff inspection, and breakpoint debugging for Waveform audio state.</p>
+      </div>
+      <div class="tt-header-actions">
+        <span class="status-pill" id="status-pill" role="status" aria-live="polite">Paused</span>
+        <button type="button" class="btn btn-secondary" id="btn-import-json">Import JSON</button>
+        <button type="button" class="btn btn-primary" id="btn-export-json">Export JSON</button>
+        <input type="file" id="import-file-input" accept="application/json,.json" hidden />
+      </div>
+    </header>
+
+    <!-- Live Podcast Stream Mutation Simulator -->
+    <section class="tt-card simulator-bar" aria-label="Podcast Stream State Simulator">
+      <div class="section-heading">
+        <div>
+          <h2>Stream Mutation Simulator</h2>
+          <p>Dispatch serializable Podcast Audio Stream transitions to record new immutable snapshots.</p>
+        </div>
+        <button type="button" class="btn btn-ghost" id="btn-reset-demo">Reset Demo Timeline</button>
+      </div>
+      <div class="sim-controls">
+        <button type="button" class="sim-btn" id="sim-toggle-play">Toggle Play / Pause</button>
+        <button type="button" class="sim-btn" id="sim-seek-forward">Seek +45s</button>
+        <button type="button" class="sim-btn" id="sim-cycle-speed">Cycle Speed</button>
+        <button type="button" class="sim-btn" id="sim-cycle-eq">Cycle EQ Preset</button>
+        <button type="button" class="sim-btn" id="sim-add-bookmark">Add Bookmark</button>
+        <button type="button" class="sim-btn" id="sim-toggle-mute">Toggle Mute</button>
+      </div>
+    </section>
+
+    <!-- Timeline Scrubber & Bidirectional Playback Controls -->
+    <section class="tt-card scrubber-panel" aria-label="Timeline Scrubber and Playback Controls">
+      <div class="scrubber-meta">
+        <div class="frame-readout">
+          <span class="frame-cursor-badge" id="frame-cursor-badge">Frame 0 / 0</span>
+          <strong class="frame-label" id="frame-label">No Snapshot</strong>
+        </div>
+        <div class="playback-meta">
+          <span class="meta-chip" id="direction-chip">Direction: Forward →</span>
+          <span class="meta-chip" id="breakpoint-count-chip">0 Breakpoints</span>
+        </div>
+      </div>
+
+      <div class="scrubber-track-wrapper">
+        <div class="scrubber-track-rail" id="scrubber-track-rail">
+          <div class="scrubber-fill" id="scrubber-fill"></div>
+          <div class="frame-cursor" id="frame-cursor" aria-hidden="true">
+            <span class="frame-cursor-pin"></span>
+          </div>
+        </div>
+        <input
+          type="range"
+          id="timeline-scrubber"
+          class="timeline-scrubber"
+          min="0"
+          max="0"
+          value="0"
+          step="1"
+          aria-label="Timeline snapshot scrubber"
+        />
+        <div class="scrubber-ticks" id="scrubber-ticks" aria-label="Snapshot timeline tick marks"></div>
+      </div>
+
+      <div class="transport-bar">
+        <div class="transport-group">
+          <button type="button" class="btn btn-icon" id="btn-first" title="Jump to first snapshot" aria-label="First snapshot">⏮</button>
+          <button type="button" class="btn btn-secondary" id="btn-step-backward" title="Step backward (Undo)">◀ Step Backward</button>
+          <button type="button" class="btn btn-primary" id="btn-play-pause" aria-pressed="false">▶ Play</button>
+          <button type="button" class="btn btn-secondary" id="btn-step-forward" title="Step forward (Redo)">Step Forward ▶</button>
+          <button type="button" class="btn btn-icon" id="btn-last" title="Jump to latest snapshot" aria-label="Latest snapshot">⏭</button>
+        </div>
+
+        <div class="transport-group">
+          <button type="button" class="btn btn-ghost" id="btn-direction" title="Toggle bidirectional scrub direction">⇄ Forward</button>
+          <label class="speed-select-wrap" for="playback-interval">
+            <span>Pace</span>
+            <select id="playback-interval" class="speed-select" aria-label="Playback interval">
+              <option value="1200">0.5x</option>
+              <option value="800" selected>1x</option>
+              <option value="400">2x</option>
+            </select>
+          </label>
+          <button type="button" class="btn btn-breakpoint" id="btn-toggle-breakpoint">● Toggle Breakpoint</button>
+          <button type="button" class="btn btn-danger-ghost" id="btn-clear-history">Clear</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Two-Column Debugger Workspace -->
+    <div class="debugger-workspace">
+      <section class="tt-card timeline-panel" aria-label="Snapshot History and Breakpoints">
+        <div class="panel-header">
+          <div>
+            <h2>Snapshot Timeline</h2>
+            <span class="panel-caption" id="history-count-label">0 snapshots</span>
+          </div>
+          <button type="button" class="btn-link" id="btn-clear-breakpoints">Clear Breakpoints</button>
+        </div>
+        <ol class="snapshot-list" id="snapshot-list"></ol>
+      </section>
+
+      <section class="tt-card inspector-panel" aria-label="State Diff Inspector">
+        <div class="panel-header">
+          <div>
+            <h2>State Diff Inspector</h2>
+            <span class="panel-caption" id="diff-subtitle">Comparing selected snapshot against previous frame</span>
+          </div>
+          <div class="diff-summary-badges" id="diff-summary-badges"></div>
+        </div>
+
+        <div class="diff-list" id="diff-list"></div>
+
+        <div class="state-json-block">
+          <div class="json-header">
+            <h3>Immutable Snapshot State</h3>
+            <span class="json-meta" id="snapshot-meta-id">—</span>
+          </div>
+          <pre class="json-viewer" id="json-viewer">{}</pre>
+        </div>
+      </section>
+    </div>
+
+    <div class="toast-banner" id="toast-banner" role="status" aria-live="polite" hidden></div>
+  </main>
+
+  <script type="module">
+    import { PodcastAudioStreamTimeTravelStore } from './snapshot-time-travel.js';
+
+    const store = new PodcastAudioStreamTimeTravelStore(null, { playbackIntervalMs: 800 });
+
+    const scrubber = document.getElementById('timeline-scrubber');
+    const scrubberFill = document.getElementById('scrubber-fill');
+    const frameCursor = document.getElementById('frame-cursor');
+    const scrubberTicks = document.getElementById('scrubber-ticks');
+    const frameCursorBadge = document.getElementById('frame-cursor-badge');
+    const frameLabel = document.getElementById('frame-label');
+    const directionChip = document.getElementById('direction-chip');
+    const breakpointCountChip = document.getElementById('breakpoint-count-chip');
+    const statusPill = document.getElementById('status-pill');
+    const historyCountLabel = document.getElementById('history-count-label');
+    const snapshotList = document.getElementById('snapshot-list');
+    const diffList = document.getElementById('diff-list');
+    const diffSummaryBadges = document.getElementById('diff-summary-badges');
+    const diffSubtitle = document.getElementById('diff-subtitle');
+    const jsonViewer = document.getElementById('json-viewer');
+    const snapshotMetaId = document.getElementById('snapshot-meta-id');
+    const btnPlayPause = document.getElementById('btn-play-pause');
+    const btnDirection = document.getElementById('btn-direction');
+    const btnToggleBreakpoint = document.getElementById('btn-toggle-breakpoint');
+    const playbackIntervalSelect = document.getElementById('playback-interval');
+    const importFileInput = document.getElementById('import-file-input');
+    const toastBanner = document.getElementById('toast-banner');
+
+    let toastTimeout = null;
+
+    function showToast(message) {
+      toastBanner.textContent = message;
+      toastBanner.hidden = false;
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toastBanner.hidden = true;
+      }, 2600);
+    }
+
+    function formatValue(val) {
+      if (val === undefined) return 'undefined';
+      if (typeof val === 'string') return `"${val}"`;
+      return JSON.stringify(val);
+    }
+
+    function seedDemoTimeline() {
+      store.clear();
+      store.commitSnapshot(
+        {
+          episodeId: 'ep-142',
+          title: 'The Future of Agentic AI & Spatial Compute',
+          isPlaying: false,
+          currentTimeSec: 0,
+          durationSec: 2880,
+          playbackSpeed: 1,
+          volume: 100,
+          muted: false,
+          eqPreset: 'Flat',
+          chapter: { index: 1, title: 'Opening & Spatial Compute' },
+          bookmarks: []
+        },
+        'Load Episode #142'
+      );
+
+      store.commitSnapshot(
+        {
+          episodeId: 'ep-142',
+          title: 'The Future of Agentic AI & Spatial Compute',
+          isPlaying: true,
+          currentTimeSec: 75,
+          durationSec: 2880,
+          playbackSpeed: 1,
+          volume: 100,
+          muted: false,
+          eqPreset: 'Flat',
+          chapter: { index: 2, title: 'Recursive Context Management' },
+          bookmarks: []
+        },
+        'Start Playback & Chapter 2'
+      );
+
+      store.commitSnapshot(
+        {
+          episodeId: 'ep-142',
+          title: 'The Future of Agentic AI & Spatial Compute',
+          isPlaying: true,
+          currentTimeSec: 382,
+          durationSec: 2880,
+          playbackSpeed: 1.5,
+          volume: 90,
+          muted: false,
+          eqPreset: 'Vocal Boost',
+          chapter: { index: 2, title: 'Recursive Context Management' },
+          bookmarks: [{ timeSec: 382, note: '3D Gaussian splats' }]
+        },
+        'Speed 1.5x, Vocal Boost & Bookmark'
+      );
+
+      store.commitSnapshot(
+        {
+          episodeId: 'ep-142',
+          title: 'The Future of Agentic AI & Spatial Compute',
+          isPlaying: true,
+          currentTimeSec: 870,
+          durationSec: 2880,
+          playbackSpeed: 1.5,
+          volume: 0,
+          muted: true,
+          eqPreset: 'Vocal Boost',
+          chapter: { index: 3, title: 'Sub-50ms Latency Budgets' },
+          bookmarks: [{ timeSec: 382, note: '3D Gaussian splats' }]
+        },
+        'Mute Audio & Enter Chapter 3'
+      );
+
+      store.commitSnapshot(
+        {
+          episodeId: 'ep-142',
+          title: 'The Future of Agentic AI & Spatial Compute',
+          isPlaying: false,
+          currentTimeSec: 1510,
+          durationSec: 2880,
+          playbackSpeed: 1.25,
+          volume: 85,
+          muted: false,
+          eqPreset: 'Bass Warmth',
+          chapter: { index: 4, title: 'Episodic Memory Graphs' },
+          bookmarks: [
+            { timeSec: 382, note: '3D Gaussian splats' },
+            { timeSec: 1510, note: 'Semantic memory tree' }
+          ]
+        },
+        'Pause at Memory Graphs & Unmute'
+      );
+
+      store.toggleBreakpoint(2);
+    }
+
+    function renderTicks(history, currIdx) {
+      scrubberTicks.replaceChildren();
+      const total = history.length;
+      if (total === 0) return;
+
+      history.forEach((snap, idx) => {
+        const pct = total === 1 ? 0 : (idx / (total - 1)) * 100;
+        const tick = document.createElement('button');
+        tick.type = 'button';
+        tick.className = 'scrubber-tick';
+        if (idx === currIdx) tick.classList.add('is-active');
+        if (store.hasBreakpoint(idx)) tick.classList.add('has-breakpoint');
+        tick.style.left = `${pct}%`;
+        tick.title = `#${idx + 1} ${snap.label}${store.hasBreakpoint(idx) ? ' (Breakpoint)' : ''}`;
+        tick.setAttribute('aria-label', `Jump to frame ${idx + 1}: ${snap.label}`);
+        tick.addEventListener('click', () => store.stepTo(idx));
+        scrubberTicks.appendChild(tick);
+      });
+    }
+
+    function renderHistoryList(history, currIdx) {
+      snapshotList.replaceChildren();
+      if (history.length === 0) {
+        const empty = document.createElement('li');
+        empty.className = 'snapshot-empty';
+        empty.textContent = 'No snapshots recorded. Use the simulator or Import JSON.';
+        snapshotList.appendChild(empty);
+        return;
+      }
+
+      history.forEach((snap, idx) => {
+        const item = document.createElement('li');
+        item.className = 'snapshot-item';
+        if (idx === currIdx) item.classList.add('is-active');
+        if (store.hasBreakpoint(idx)) item.classList.add('has-breakpoint');
+
+        const bpBtn = document.createElement('button');
+        bpBtn.type = 'button';
+        bpBtn.className = 'bp-dot-btn';
+        bpBtn.title = store.hasBreakpoint(idx) ? 'Remove breakpoint' : 'Set breakpoint';
+        bpBtn.setAttribute('aria-label', `Toggle breakpoint on frame ${idx + 1}`);
+        bpBtn.textContent = store.hasBreakpoint(idx) ? '●' : '○';
+        bpBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          store.toggleBreakpoint(idx);
+        });
+
+        const selectBtn = document.createElement('button');
+        selectBtn.type = 'button';
+        selectBtn.className = 'snapshot-select-btn';
+        selectBtn.addEventListener('click', () => store.stepTo(idx));
+
+        const num = document.createElement('span');
+        num.className = 'snapshot-index';
+        num.textContent = `#${idx + 1}`;
+
+        const label = document.createElement('span');
+        label.className = 'snapshot-label';
+        label.textContent = snap.label;
+
+        const time = document.createElement('span');
+        time.className = 'snapshot-time';
+        time.textContent = new Date(snap.timestamp).toLocaleTimeString();
+
+        selectBtn.append(num, label, time);
+        item.append(bpBtn, selectBtn);
+        snapshotList.appendChild(item);
+      });
+    }
+
+    function renderDiffInspector(currIdx, currentSnapshot) {
+      diffSummaryBadges.replaceChildren();
+      diffList.replaceChildren();
+
+      if (!currentSnapshot || currIdx < 0) {
+        diffSubtitle.textContent = 'No active snapshot selected.';
+        jsonViewer.textContent = '{}';
+        snapshotMetaId.textContent = '—';
+        return;
+      }
+
+      const { isInitial, diffs } = store.getDiffAt(currIdx);
+      diffSubtitle.textContent = isInitial
+        ? 'Initial baseline snapshot (all properties introduced)'
+        : `Comparing Frame #${currIdx + 1} against Frame #${currIdx}`;
+
+      const counts = { added: 0, modified: 0, removed: 0 };
+      diffs.forEach((d) => {
+        counts[d.type] = (counts[d.type] || 0) + 1;
+      });
+
+      const badgeSpecs = [
+        { label: `+${counts.added} Added`, cls: 'summary-badge-added' },
+        { label: `~${counts.modified} Modified`, cls: 'summary-badge-modified' },
+        { label: `-${counts.removed} Removed`, cls: 'summary-badge-removed' }
+      ];
+      badgeSpecs.forEach(({ label, cls }) => {
+        const span = document.createElement('span');
+        span.className = `summary-badge ${cls}`;
+        span.textContent = label;
+        diffSummaryBadges.appendChild(span);
+      });
+
+      if (diffs.length === 0) {
+        const clean = document.createElement('div');
+        clean.className = 'diff-empty';
+        clean.textContent = 'No property differences from the previous snapshot.';
+        diffList.appendChild(clean);
+      } else {
+        diffs.forEach((entry) => {
+          const row = document.createElement('div');
+          row.className = `diff-row diff-row-${entry.type}`;
+
+          const badge = document.createElement('span');
+          badge.className = `diff-badge diff-badge-${entry.type}`;
+          badge.textContent = entry.type.toUpperCase();
+
+          const keyEl = document.createElement('code');
+          keyEl.className = 'diff-key';
+          keyEl.textContent = entry.key;
+
+          const valuesWrap = document.createElement('div');
+          valuesWrap.className = 'diff-values';
+
+          if (entry.type === 'added') {
+            const newBadge = document.createElement('code');
+            newBadge.className = 'diff-val diff-val-green';
+            newBadge.textContent = `+ ${formatValue(entry.newVal)}`;
+            valuesWrap.appendChild(newBadge);
+          } else if (entry.type === 'removed') {
+            const oldBadge = document.createElement('code');
+            oldBadge.className = 'diff-val diff-val-red';
+            oldBadge.textContent = `- ${formatValue(entry.oldVal)}`;
+            valuesWrap.appendChild(oldBadge);
+          } else {
+            const oldBadge = document.createElement('code');
+            oldBadge.className = 'diff-val diff-val-red';
+            oldBadge.textContent = formatValue(entry.oldVal);
+
+            const arrow = document.createElement('span');
+            arrow.className = 'diff-arrow';
+            arrow.textContent = '→';
+
+            const newBadge = document.createElement('code');
+            newBadge.className = 'diff-val diff-val-green';
+            newBadge.textContent = formatValue(entry.newVal);
+
+            valuesWrap.append(oldBadge, arrow, newBadge);
+          }
+
+          row.append(badge, keyEl, valuesWrap);
+          diffList.appendChild(row);
+        });
+      }
+
+      snapshotMetaId.textContent = `${currentSnapshot.id} • ${new Date(currentSnapshot.timestamp).toLocaleTimeString()}`;
+      jsonViewer.textContent = JSON.stringify(currentSnapshot.state, null, 2);
+    }
+
+    function render() {
+      const history = store.getHistory();
+      const currIdx = store.currentIndex;
+      const currentSnapshot = store.getCurrentSnapshot();
+      const total = history.length;
+
+      scrubber.max = Math.max(0, total - 1);
+      scrubber.value = currIdx >= 0 ? currIdx : 0;
+      scrubber.disabled = total === 0;
+
+      const pct = total <= 1 ? 0 : (Math.max(0, currIdx) / (total - 1)) * 100;
+      scrubberFill.style.width = `${pct}%`;
+      frameCursor.style.left = `${pct}%`;
+      frameCursor.hidden = total === 0;
+
+      frameCursorBadge.textContent = `Frame ${currIdx >= 0 ? currIdx + 1 : 0} / ${total}`;
+      frameLabel.textContent = currentSnapshot ? currentSnapshot.label : 'No Snapshot';
+      historyCountLabel.textContent = `${total} snapshot${total === 1 ? '' : 's'}`;
+
+      const bpCount = store.getBreakpoints().length;
+      breakpointCountChip.textContent = `${bpCount} Breakpoint${bpCount === 1 ? '' : 's'}`;
+      btnToggleBreakpoint.classList.toggle('is-active', currIdx >= 0 && store.hasBreakpoint(currIdx));
+
+      const isForward = store.direction === 'forward';
+      directionChip.textContent = `Direction: ${isForward ? 'Forward →' : '← Backward'}`;
+      btnDirection.textContent = isForward ? '⇄ Forward' : '⇄ Backward';
+
+      btnPlayPause.textContent = store.isPlaying ? '⏸ Pause' : '▶ Play';
+      btnPlayPause.setAttribute('aria-pressed', String(store.isPlaying));
+      statusPill.textContent = store.isPlaying
+        ? `Playing (${isForward ? 'Forward' : 'Backward'})`
+        : 'Paused';
+      statusPill.classList.toggle('is-playing', store.isPlaying);
+
+      renderTicks(history, currIdx);
+      renderHistoryList(history, currIdx);
+      renderDiffInspector(currIdx, currentSnapshot);
+    }
+
+    store.subscribe((event, payload) => {
+      render();
+      if (event === 'breakpoint_hit') {
+        showToast(`Breakpoint hit at Frame #${payload.index + 1}: ${payload.snapshot.label}`);
+      }
+    });
+
+    // Transport Controls
+    scrubber.addEventListener('input', (e) => {
+      store.pause();
+      store.stepTo(parseInt(e.target.value, 10));
+    });
+
+    document.getElementById('btn-first').addEventListener('click', () => {
+      store.pause();
+      store.stepTo(0);
+    });
+
+    document.getElementById('btn-last').addEventListener('click', () => {
+      store.pause();
+      store.stepTo(store.getHistory().length - 1);
+    });
+
+    document.getElementById('btn-step-backward').addEventListener('click', () => {
+      store.pause();
+      store.undo();
+    });
+
+    document.getElementById('btn-step-forward').addEventListener('click', () => {
+      store.pause();
+      store.redo();
+    });
+
+    btnPlayPause.addEventListener('click', () => {
+      if (store.isPlaying) {
+        store.pause();
+      } else {
+        const started = store.play(store.direction, Number(playbackIntervalSelect.value));
+        if (!started) showToast('Add at least 2 snapshots to scrub-play.');
+      }
+    });
+
+    btnDirection.addEventListener('click', () => {
+      const nextDir = store.direction === 'forward' ? 'backward' : 'forward';
+      store.setDirection(nextDir);
+    });
+
+    playbackIntervalSelect.addEventListener('change', (e) => {
+      store.setPlaybackInterval(Number(e.target.value));
+    });
+
+    btnToggleBreakpoint.addEventListener('click', () => {
+      if (store.currentIndex < 0) return;
+      const enabled = store.toggleBreakpoint(store.currentIndex);
+      showToast(enabled ? `Breakpoint set on Frame #${store.currentIndex + 1}` : `Breakpoint removed from Frame #${store.currentIndex + 1}`);
+    });
+
+    document.getElementById('btn-clear-breakpoints').addEventListener('click', () => {
+      store.clearBreakpoints();
+      showToast('All breakpoints cleared.');
+    });
+
+    document.getElementById('btn-clear-history').addEventListener('click', () => {
+      store.clear();
+      showToast('Timeline history cleared.');
+    });
+
+    // Export & Import JSON
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      const payload = store.exportHistory();
+      const blob = new Blob([payload], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `waveform-time-travel-${Date.now()}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast('Exported timeline history JSON.');
+    });
+
+    document.getElementById('btn-import-json').addEventListener('click', () => {
+      importFileInput.click();
+    });
+
+    importFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        store.importHistory(text);
+        showToast(`Imported ${store.getHistory().length} snapshot(s).`);
+      } catch (err) {
+        showToast(`Import failed: ${err.message}`);
+      } finally {
+        importFileInput.value = '';
+      }
+    });
+
+    // Live Stream Mutation Simulator
+    const speeds = [1, 1.25, 1.5, 2, 0.75];
+    const eqPresets = ['Flat', 'Vocal Boost', 'Bass Warmth', 'Studio Crisp'];
+
+    function getBaseState() {
+      return (
+        store.getCurrentState() || {
+          episodeId: 'ep-142',
+          title: 'The Future of Agentic AI & Spatial Compute',
+          isPlaying: false,
+          currentTimeSec: 0,
+          durationSec: 2880,
+          playbackSpeed: 1,
+          volume: 100,
+          muted: false,
+          eqPreset: 'Flat',
+          chapter: { index: 1, title: 'Opening & Spatial Compute' },
+          bookmarks: []
+        }
+      );
+    }
+
+    document.getElementById('sim-toggle-play').addEventListener('click', () => {
+      const next = getBaseState();
+      next.isPlaying = !next.isPlaying;
+      store.commitSnapshot(next, next.isPlaying ? 'Resume Audio Stream' : 'Pause Audio Stream');
+    });
+
+    document.getElementById('sim-seek-forward').addEventListener('click', () => {
+      const next = getBaseState();
+      next.currentTimeSec = Math.min(next.durationSec || 2880, (next.currentTimeSec || 0) + 45);
+      store.commitSnapshot(next, `Seek to ${next.currentTimeSec}s`);
+    });
+
+    document.getElementById('sim-cycle-speed').addEventListener('click', () => {
+      const next = getBaseState();
+      const idx = speeds.indexOf(next.playbackSpeed);
+      next.playbackSpeed = speeds[(idx + 1) % speeds.length];
+      store.commitSnapshot(next, `Speed -> ${next.playbackSpeed}x`);
+    });
+
+    document.getElementById('sim-cycle-eq').addEventListener('click', () => {
+      const next = getBaseState();
+      const idx = eqPresets.indexOf(next.eqPreset);
+      next.eqPreset = eqPresets[(idx + 1) % eqPresets.length];
+      store.commitSnapshot(next, `EQ -> ${next.eqPreset}`);
+    });
+
+    document.getElementById('sim-add-bookmark').addEventListener('click', () => {
+      const next = getBaseState();
+      const list = Array.isArray(next.bookmarks) ? next.bookmarks.slice() : [];
+      list.push({ timeSec: next.currentTimeSec || 0, note: `Highlight @ ${next.currentTimeSec || 0}s` });
+      next.bookmarks = list;
+      store.commitSnapshot(next, `Bookmark @ ${next.currentTimeSec || 0}s`);
+    });
+
+    document.getElementById('sim-toggle-mute').addEventListener('click', () => {
+      const next = getBaseState();
+      next.muted = !next.muted;
+      next.volume = next.muted ? 0 : 85;
+      store.commitSnapshot(next, next.muted ? 'Mute Stream' : 'Unmute Stream');
+    });
+
+    document.getElementById('btn-reset-demo').addEventListener('click', () => {
+      seedDemoTimeline();
+      showToast('Demo timeline reset.');
+    });
+
+    seedDemoTimeline();
+    render();
+  </script>
+</body>
+</html>

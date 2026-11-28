@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Lightweight drag-and-drop Kanban task board with column reordering and localStorage sync for Music DAW Studio (BEAT-FORGE)."
+  />
+  <title>BEAT-FORGE // Task Kanban Board — Music DAW Studio</title>
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="./kanban-board.css" />
+</head>
+<body class="kanban-body">
+  <header class="glass-nav">
+    <div class="nav-left">
+      <a class="brand" href="./index.html">
+        <span aria-hidden="true">&#9889;</span>
+        <span>BEAT-FORGE</span>
+      </a>
+      <span class="nav-divider" aria-hidden="true">/</span>
+      <span class="nav-subtitle">Studio Session Kanban</span>
+    </div>
+    <div class="nav-right">
+      <span class="nav-badge">MUSIC DAW STUDIO</span>
+      <span class="sync-pill" id="board-summary" aria-live="polite">0 tasks synced</span>
+    </div>
+  </header>
+
+  <main class="kanban-shell" data-kanban-lab>
+    <section class="kanban-hero" aria-labelledby="kanban-title">
+      <div class="hero-copy">
+        <p class="eyebrow">WORKFLOW STAGES // DRAG-AND-DROP BOARD</p>
+        <h1 id="kanban-title">Production &amp; Mixdown Kanban</h1>
+        <p class="lede">
+          Drag task cards across studio stages or reposition cards inside a lane.
+          Drag any column header (or use the arrow buttons) to reorder workflow columns &mdash;
+          changes sync automatically to <code>localStorage</code>.
+        </p>
+      </div>
+      <div class="hero-actions">
+        <button type="button" id="open-task-modal-btn" class="btn-primary">+ New Task</button>
+        <button type="button" id="reset-board-btn" class="btn-secondary">Reset Demo</button>
+        <button type="button" id="clear-board-btn" class="btn-ghost">Clear Board</button>
+      </div>
+    </section>
+
+    <section id="kanban-grid" class="kanban-grid" aria-label="Music DAW Studio Kanban columns">
+      <article class="kanban-column" data-column="backlog">
+        <div class="column-header col-backlog" draggable="true" data-column-handle="backlog">
+          <div class="col-title-wrap">
+            <span class="drag-grip" aria-hidden="true">&#8942;&#8942;</span>
+            <h2>Backlog</h2>
+            <span id="count-backlog" class="col-count">0</span>
+          </div>
+          <div class="col-reorder-actions">
+            <button type="button" class="col-move-btn" data-col-move="prev" aria-label="Move Backlog column left">&#9664;</button>
+            <button type="button" class="col-move-btn" data-col-move="next" aria-label="Move Backlog column right">&#9654;</button>
+          </div>
+        </div>
+        <div class="kanban-column-body" data-col="backlog" role="list" aria-label="Backlog tasks"></div>
+      </article>
+
+      <article class="kanban-column" data-column="in-progress">
+        <div class="column-header col-in-progress" draggable="true" data-column-handle="in-progress">
+          <div class="col-title-wrap">
+            <span class="drag-grip" aria-hidden="true">&#8942;&#8942;</span>
+            <h2>In Progress</h2>
+            <span id="count-in-progress" class="col-count">0</span>
+          </div>
+          <div class="col-reorder-actions">
+            <button type="button" class="col-move-btn" data-col-move="prev" aria-label="Move In Progress column left">&#9664;</button>
+            <button type="button" class="col-move-btn" data-col-move="next" aria-label="Move In Progress column right">&#9654;</button>
+          </div>
+        </div>
+        <div class="kanban-column-body" data-col="in-progress" role="list" aria-label="In Progress tasks"></div>
+      </article>
+
+      <article class="kanban-column" data-column="review">
+        <div class="column-header col-review" draggable="true" data-column-handle="review">
+          <div class="col-title-wrap">
+            <span class="drag-grip" aria-hidden="true">&#8942;&#8942;</span>
+            <h2>Review</h2>
+            <span id="count-review" class="col-count">0</span>
+          </div>
+          <div class="col-reorder-actions">
+            <button type="button" class="col-move-btn" data-col-move="prev" aria-label="Move Review column left">&#9664;</button>
+            <button type="button" class="col-move-btn" data-col-move="next" aria-label="Move Review column right">&#9654;</button>
+          </div>
+        </div>
+        <div class="kanban-column-body" data-col="review" role="list" aria-label="Review tasks"></div>
+      </article>
+
+      <article class="kanban-column" data-column="done">
+        <div class="column-header col-done" draggable="true" data-column-handle="done">
+          <div class="col-title-wrap">
+            <span class="drag-grip" aria-hidden="true">&#8942;&#8942;</span>
+            <h2>Done</h2>
+            <span id="count-done" class="col-count">0</span>
+          </div>
+          <div class="col-reorder-actions">
+            <button type="button" class="col-move-btn" data-col-move="prev" aria-label="Move Done column left">&#9664;</button>
+            <button type="button" class="col-move-btn" data-col-move="next" aria-label="Move Done column right">&#9654;</button>
+          </div>
+        </div>
+        <div class="kanban-column-body" data-col="done" role="list" aria-label="Done tasks"></div>
+      </article>
+    </section>
+  </main>
+
+  <div
+    id="task-modal"
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="task-modal-title"
+    hidden
+  >
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="task-modal-title">Create New Studio Task</h3>
+        <button type="button" id="close-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+      </div>
+
+      <form id="add-task-form" novalidate>
+        <div class="form-field">
+          <label for="new-task-title">Task Title</label>
+          <input
+            type="text"
+            id="new-task-title"
+            placeholder="e.g. Sidechain Bassline to Kick Bus"
+            maxlength="120"
+            required
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="new-task-priority">Priority Tag</label>
+            <select id="new-task-priority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="new-task-column">Workflow Stage</label>
+            <select id="new-task-column">
+              <option value="backlog" selected>Backlog</option>
+              <option value="in-progress">In Progress</option>
+              <option value="review">Review</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+
+        <p id="task-form-error" class="form-error" role="alert" hidden></p>
+
+        <div class="modal-actions">
+          <button type="button" id="cancel-modal-btn" class="btn-secondary">Cancel</button>
+          <button type="submit" id="submit-task-btn" class="btn-primary">Create Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="kanban-footer">
+    <p>BEAT-FORGE // Music DAW Studio &mdash; Isolated Client-Side Kanban Board &copy; 2026</p>
+  </footer>
+
+  <script type="module" src="./kanban-board.js"></script>
+</body>
+</html>

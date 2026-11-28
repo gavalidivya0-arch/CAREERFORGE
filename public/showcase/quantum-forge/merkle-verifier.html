@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum Forge — Merkle Tree Integrity &amp; Proof Verifier</title>
+  <link rel="stylesheet" href="merkle-verifier.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body class="merkle-body">
+  <header class="glass-nav">
+    <div class="brand">
+      <span>⚛️</span>
+      <span>QUANTUM FORGE // MERKLE VERIFIER</span>
+    </div>
+    <div id="root-hash-pill" class="root-pill idle" title="Current Merkle Root Hash">
+      <span class="pill-dot"></span>
+      <span>ROOT:</span>
+      <code id="root-hash-text">Initializing…</code>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero-header">
+      <div class="header-top">
+        <span class="badge">SHA-256 CRYPTOGRAPHIC INTEGRITY</span>
+        <a href="index.html" class="back-link">← Return to Quantum Forge Showcase</a>
+      </div>
+      <h1>Merkle Tree Data Integrity &amp; Proof Verification Engine</h1>
+      <p>
+        Computes deterministic SHA-256 leaf digests, constructs balanced binary hash trees, generates
+        logarithmic audit paths, and verifies inclusion proofs in sub-millisecond time.
+      </p>
+    </section>
+
+    <section class="metrics-strip">
+      <div class="metric-card">
+        <span class="metric-label">Tree Depth</span>
+        <span class="metric-val" id="tree-depth-val">0</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Leaf Count</span>
+        <span class="metric-val" id="leaf-count-val">0</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Tree Build Time</span>
+        <span class="metric-val" id="build-latency-val">0.000 ms</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Proof Verify Time</span>
+        <span class="metric-val" id="verify-latency-val">0.000 ms</span>
+      </div>
+    </section>
+
+    <section class="workspace-grid">
+      <div class="panel dataset-panel">
+        <div class="panel-header">
+          <h2>1. Dataset Input Container</h2>
+          <div class="preset-group">
+            <button type="button" class="btn-chip" data-preset="balanced4">4 Leaves</button>
+            <button type="button" class="btn-chip" data-preset="odd5">5 Leaves (Odd)</button>
+            <button type="button" class="btn-chip" data-preset="quantum6">6 Quantum Gates</button>
+            <button type="button" class="btn-chip" data-preset="deep8">8 Calibration Nodes</button>
+          </div>
+        </div>
+        <label for="dataset-input" class="field-label">
+          Enter one record per line to hash into SHA-256 leaves:
+        </label>
+        <textarea id="dataset-input" rows="7" spellcheck="false" placeholder="Enter dataset records, one per line..."></textarea>
+        <div class="action-row">
+          <button type="button" id="build-tree-btn" class="btn btn-primary">Build Merkle Tree</button>
+        </div>
+      </div>
+
+      <div id="verification-status-card" class="panel status-card state-verified">
+        <div class="panel-header">
+          <h2>2. Proof Verification Status</h2>
+          <span id="verification-badge" class="status-pill verified">Inclusion Proof Verified</span>
+        </div>
+
+        <div class="form-row">
+          <div class="field-col">
+            <label for="leaf-select" class="field-label">Target Leaf Index</label>
+            <select id="leaf-select"></select>
+          </div>
+        </div>
+
+        <div class="field-col">
+          <label for="verify-payload-input" class="field-label">Candidate Leaf Payload (editable for tamper testing)</label>
+          <input type="text" id="verify-payload-input" spellcheck="false" />
+        </div>
+
+        <div class="action-row">
+          <button type="button" id="verify-proof-btn" class="btn btn-primary">Verify Inclusion Proof</button>
+          <button type="button" id="tamper-btn" class="btn btn-danger">Simulate Tamper</button>
+          <button type="button" id="restore-btn" class="btn btn-ghost">Restore Leaf</button>
+        </div>
+
+        <div class="hash-comparison">
+          <div class="hash-row">
+            <span class="hash-label">Expected Root:</span>
+            <code id="expected-root-val" class="hash-full">—</code>
+          </div>
+          <div class="hash-row">
+            <span class="hash-label">Computed Root:</span>
+            <code id="computed-root-val" class="hash-full">—</code>
+          </div>
+        </div>
+
+        <div class="audit-path-box">
+          <span class="field-label">Cryptographic Audit Path (Sibling Hashes)</span>
+          <ul id="audit-steps-list" class="audit-steps-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel visualizer-panel">
+      <div class="panel-header">
+        <div>
+          <h2>3. Tree Depth &amp; Hierarchy Visualizer</h2>
+          <p class="panel-sub">Click any leaf node to inspect its inclusion proof path from leaf to root.</p>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><i class="swatch target"></i>Target Leaf</span>
+          <span class="legend-item"><i class="swatch sibling"></i>Audit Sibling</span>
+          <span class="legend-item"><i class="swatch verified"></i>Verified Path</span>
+          <span class="legend-item"><i class="swatch tampered"></i>Tampered Mismatch</span>
+        </div>
+      </div>
+
+      <div id="tree-empty-msg" class="empty-state" hidden>
+        Dataset is empty. Add at least one line above and click <strong>Build Merkle Tree</strong>.
+      </div>
+      <div id="merkle-tree-canvas" class="merkle-tree-canvas"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>CAREERFORGE Open-Source Isolated Showcase &copy; 2026 · Quantum Forge Merkle Verifier</p>
+  </footer>
+
+  <script type="module" src="merkle-verifier.js"></script>
+</body>
+</html>

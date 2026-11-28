@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Travel Odyssey — Immutable State Snapshot &amp; Time-Travel Debugger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="./snapshot-time-travel.css" />
+</head>
+<body>
+  <main class="time-travel-container" data-odyssey-time-travel>
+    <header class="page-header">
+      <a href="index.html" class="back-link">&larr; Back to Odyssey Expeditions</a>
+      <div class="header-badge">ODYSSEY-STATE-ENGINE // TIME-TRAVEL DEBUGGER</div>
+      <h1>Immutable State Snapshot &amp; Bidirectional Time-Travel Debugger</h1>
+      <p class="subtitle">
+        Capture frozen expedition state snapshots, scrub forward or backward across itinerary transitions, inspect property-level diffs, pause on breakpoints, and export JSON timelines.
+      </p>
+
+      <div class="status-summary-bar">
+        <div class="summary-chip">Frame: <strong id="current-frame-val">0 / 0</strong></div>
+        <div class="summary-chip">Checkpoint: <strong id="current-label-val">Expedition Initialized</strong></div>
+        <div class="summary-chip">Playback: <strong id="playback-status-val">Paused</strong></div>
+        <div class="summary-chip">Timeline: <strong id="history-count-val">0 Snapshots</strong></div>
+        <div class="summary-chip">Breakpoints: <strong id="breakpoint-status-val">0 Active</strong></div>
+      </div>
+    </header>
+
+    <!-- Timeline Scrubber & Bidirectional Playback Controls -->
+    <section class="scrubber-card" aria-label="Timeline scrubber controls">
+      <div class="scrubber-header-row">
+        <h2>Expedition Timeline Scrubber</h2>
+        <div class="playback-controls">
+          <button id="step-first-btn" type="button" class="control-btn" title="Jump to First Frame">⏮ First</button>
+          <button id="step-back-btn" type="button" class="control-btn" title="Step Backward (Undo)">◀ Undo</button>
+          <button id="play-reverse-btn" type="button" class="control-btn play-btn" title="Play Reverse Scrub">◀ Play Reverse</button>
+          <button id="play-forward-btn" type="button" class="control-btn play-btn" title="Play Forward Scrub">▶ Play Forward</button>
+          <button id="step-fwd-btn" type="button" class="control-btn" title="Step Forward (Redo)">Redo ▶</button>
+          <button id="step-last-btn" type="button" class="control-btn" title="Jump to Latest Frame">Last ⏭</button>
+          <button id="toggle-breakpoint-btn" type="button" class="control-btn breakpoint-btn" title="Toggle Breakpoint on Active Frame">○ Set Breakpoint</button>
+          <button id="export-btn" type="button" class="control-btn export-btn" title="Export Timeline JSON">Export JSON</button>
+          <button id="import-btn" type="button" class="control-btn import-btn" title="Import Timeline JSON">Import JSON</button>
+          <input id="import-file-input" type="file" accept=".json,application/json" hidden />
+        </div>
+      </div>
+
+      <div class="scrubber-wrapper">
+        <div class="scrubber-track-container">
+          <div id="tick-marks" class="tick-marks" aria-label="Snapshot frame ticks"></div>
+          <input
+            id="timeline-slider"
+            type="range"
+            min="0"
+            max="0"
+            value="0"
+            class="timeline-slider"
+            aria-label="Timeline frame scrubber"
+          />
+        </div>
+        <div class="scrubber-labels">
+          <span id="start-frame-label">Frame #0</span>
+          <span id="current-frame-indicator" class="active-frame-tag">Frame #0</span>
+          <span id="end-frame-label">Frame #0</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="main-split-grid">
+      <!-- Left Column: State Simulator & Current Snapshot Viewer -->
+      <section class="state-control-col">
+        <div class="panel-card">
+          <h2>Commit Expedition State Snapshot</h2>
+          <form id="state-form" class="state-form">
+            <div class="form-row">
+              <label for="exp-destination" class="field-label">Active Destination</label>
+              <input id="exp-destination" type="text" class="form-input" value="Iceland — Vatnajökull Ice Cap" />
+            </div>
+
+            <div class="form-row">
+              <label for="exp-phase" class="field-label">Expedition Phase</label>
+              <select id="exp-phase" class="form-select">
+                <option value="PREPARATION">PREPARATION</option>
+                <option value="GEAR_LOCKED">GEAR_LOCKED</option>
+                <option value="TRANSIT">TRANSIT</option>
+                <option value="ACTIVE_EXPEDITION">ACTIVE_EXPEDITION</option>
+                <option value="COMPLETED">COMPLETED</option>
+              </select>
+            </div>
+
+            <div class="form-row-split">
+              <div class="form-row">
+                <label for="exp-packed-items" class="field-label">Gear Packed (of 16)</label>
+                <input id="exp-packed-items" type="number" min="0" max="16" class="form-input" value="6" />
+              </div>
+              <div class="form-row">
+                <label for="exp-budget" class="field-label">Budget Remaining (USD)</label>
+                <input id="exp-budget" type="number" min="0" step="50" class="form-input" value="4800" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="exp-satellite" class="field-label">Garmin Satellite Telemetry</label>
+              <select id="exp-satellite" class="form-select">
+                <option value="true">Online (GPS Lock)</option>
+                <option value="false">Offline (Blackout)</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="commit-label" class="field-label">Snapshot Checkpoint Label</label>
+              <input id="commit-label" type="text" class="form-input" value="Expedition Checkpoint" placeholder="e.g. Basecamp Supply Drop" />
+            </div>
+
+            <button type="submit" class="primary-btn commit-btn">Commit Immutable Snapshot</button>
+          </form>
+        </div>
+
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Frozen Snapshot Payload</h2>
+            <span id="snapshot-id-tag" class="meta-tag">odyssey-snap-0</span>
+          </div>
+          <pre id="state-viewer" class="json-viewer">{}</pre>
+        </div>
+      </section>
+
+      <!-- Right Column: Diff Inspector & Timeline Frames -->
+      <section class="diff-inspector-col">
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>State Diff Inspector</h2>
+            <span id="diff-status-badge" class="meta-tag">0 Changes</span>
+          </div>
+          <p class="diff-intro">
+            Visual property diff comparing the active snapshot frame against the immediately preceding frame.
+          </p>
+          <div id="diff-inspector" class="diff-inspector-list">
+            <p class="empty-diff-hint">Expedition genesis frame: no earlier snapshot to compare against.</p>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Timeline Frames &amp; Breakpoints</h2>
+            <span id="timeline-count-badge" class="meta-tag">0 Frames</span>
+          </div>
+          <div id="history-frames-list" class="history-frames-list"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./snapshot-time-travel.js"></script>
+</body>
+</html>

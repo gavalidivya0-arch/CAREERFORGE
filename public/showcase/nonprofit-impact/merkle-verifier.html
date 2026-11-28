@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nonprofit Impact — Merkle Tree Integrity &amp; Proof Verifier</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%8C%B1%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./merkle-verifier.css" />
+</head>
+<body class="merkle-theme">
+  <a class="back-link" href="./index.html">← TerraInitia</a>
+
+  <main class="merkle-shell">
+    <header class="merkle-hero">
+      <p class="eyebrow">🌱 Nonprofit Impact · Cryptographic Integrity Engine</p>
+      <h1>Merkle Tree Data Integrity &amp; Proof Verifier</h1>
+      <p class="lede">
+        Hash reforestation grant disbursements with SHA-256, construct a domain-separated binary Merkle tree,
+        and verify inclusion proofs against the anchored root in sub-millisecond time.
+      </p>
+
+      <div class="status-pills" aria-label="Merkle root status telemetry">
+        <div class="status-pill">
+          <span class="status-pill-label">Anchored Root</span>
+          <code id="root-hash-pill">—</code>
+        </div>
+        <div id="root-status-pill" class="status-pill is-verified">Integrity Verified</div>
+        <div id="depth-pill" class="status-pill">Depth 0 levels</div>
+        <div id="leaf-count-pill" class="status-pill">0 records</div>
+        <div id="latency-pill" class="status-pill">0.000 ms verify</div>
+      </div>
+    </header>
+
+    <div class="merkle-grid">
+      <section class="panel" aria-labelledby="dataset-heading">
+        <div class="panel-head">
+          <div>
+            <h2 id="dataset-heading">Dataset Input</h2>
+            <p class="panel-sub">Enter one climate grant or impact record per line to build the tree.</p>
+          </div>
+          <div class="preset-group" aria-label="Sample datasets">
+            <button type="button" class="btn btn-ghost" data-preset="compact4">4 Grants</button>
+            <button type="button" class="btn btn-ghost" data-preset="odd5">5 Grants (Odd)</button>
+            <button type="button" class="btn btn-ghost" data-preset="balanced8">8 Grants</button>
+          </div>
+        </div>
+
+        <label class="sr-only" for="dataset-input">Grant ledger records</label>
+        <textarea id="dataset-input" class="dataset-textarea" spellcheck="false"></textarea>
+
+        <div class="dataset-actions">
+          <span id="dataset-error" class="error-msg" role="alert"></span>
+          <button type="button" id="build-tree-btn" class="btn btn-primary">Build Merkle Tree</button>
+        </div>
+
+        <p class="leaf-selector-title">Select Leaf Record to Audit</p>
+        <div id="leaf-list" class="leaf-list" role="list" aria-label="Leaf records"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="proof-heading">
+        <div class="panel-head">
+          <div>
+            <h2 id="proof-heading">Proof Verification Status</h2>
+            <p class="panel-sub">Audit inclusion path against the anchored root or simulate tampering.</p>
+          </div>
+        </div>
+
+        <article id="verification-card" class="verification-card state-verified" aria-live="polite">
+          <div class="verification-top">
+            <span id="verification-badge" class="verification-badge">VERIFIED</span>
+          </div>
+          <h3 id="verification-title">Leaf Inclusion Confirmed</h3>
+          <p id="verification-summary" class="verification-summary"></p>
+
+          <div class="hash-compare">
+            <div class="hash-row">
+              <span>Claimed Leaf Hash (SHA-256 · 0x00)</span>
+              <code id="leaf-hash-value">—</code>
+            </div>
+            <div class="hash-row">
+              <span>Computed Root</span>
+              <code id="computed-root-value">—</code>
+            </div>
+            <div class="hash-row">
+              <span>Anchored Root</span>
+              <code id="anchored-root-value">—</code>
+            </div>
+          </div>
+        </article>
+
+        <div class="claimed-control">
+          <label for="claimed-leaf-input">Claimed Leaf Payload (edit to test tamper detection)</label>
+          <input id="claimed-leaf-input" class="claimed-input" type="text" spellcheck="false" />
+        </div>
+
+        <div class="tamper-actions">
+          <button type="button" id="tamper-btn" class="btn btn-tamper">Simulate Leaf Tamper</button>
+          <button type="button" id="restore-btn" class="btn btn-ghost">Restore Authentic Leaf</button>
+        </div>
+
+        <ol id="proof-steps" class="proof-steps" aria-label="Cryptographic audit path"></ol>
+      </section>
+    </div>
+
+    <section class="panel tree-panel" aria-labelledby="tree-heading">
+      <div class="panel-head">
+        <div>
+          <h2 id="tree-heading">Tree Depth Visualizer</h2>
+          <p class="panel-sub">Click any leaf node at L0 to trace its SHA-256 audit path up to the root.</p>
+        </div>
+        <div class="tree-legend" aria-label="Node color legend">
+          <span class="legend-item"><span class="legend-swatch swatch-verified"></span>Verified Path</span>
+          <span class="legend-item"><span class="legend-swatch swatch-sibling"></span>Proof Sibling</span>
+          <span class="legend-item"><span class="legend-swatch swatch-tampered"></span>Tamper Mismatch</span>
+        </div>
+      </div>
+
+      <div id="tree-visualizer" class="tree-visualizer">
+        <svg id="tree-connectors" class="tree-connectors" aria-hidden="true"></svg>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./merkle-verifier.js"></script>
+</body>
+</html>

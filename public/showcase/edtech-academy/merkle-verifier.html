@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edtech Academy - Merkle Tree Integrity &amp; Proof Verifier</title>
+  <link rel="stylesheet" href="merkle-verifier.css">
+</head>
+<body>
+  <div class="merkle-container" data-merkle-verifier>
+    <header class="merkle-header">
+      <div class="header-badge">CRYPTOGRAPHIC DATA INTEGRITY ENGINE</div>
+      <h1>Edtech Academy Merkle Tree Verifier</h1>
+      <p class="subtitle">
+        SHA-256 balanced binary hash tree builder, cryptographic audit path generator, and sub-millisecond inclusion proof verifier.
+      </p>
+    </header>
+
+    <main class="merkle-layout">
+      <!-- Dataset Input Container -->
+      <section class="card dataset-card" aria-labelledby="dataset-heading">
+        <div class="card-header-row">
+          <h2 id="dataset-heading">Academic Records Dataset</h2>
+          <span id="leaf-count-badge" class="root-pill pill-ready">0 leaf records</span>
+        </div>
+        <p class="card-desc">
+          Enter one student certificate or transcript record per line to hash into leaf nodes and construct the balanced Merkle tree.
+        </p>
+
+        <textarea
+          id="dataset-input"
+          class="dataset-textarea"
+          rows="6"
+          spellcheck="false"
+          aria-label="Merkle tree dataset records"
+          placeholder="Enter one record per line..."
+        ></textarea>
+
+        <div class="control-row">
+          <button id="build-tree-btn" type="button" class="btn btn-primary">Build Merkle Tree</button>
+          <button id="preset-4-btn" type="button" class="btn btn-secondary">Load 4 Leaves</button>
+          <button id="preset-7-btn" type="button" class="btn btn-secondary">Load 7 Leaves (Odd)</button>
+        </div>
+
+        <div class="selector-group">
+          <label for="leaf-select" class="field-label">Target Leaf for Audit Proof</label>
+          <select id="leaf-select" class="leaf-select"></select>
+        </div>
+      </section>
+
+      <!-- Proof Verification Status Card -->
+      <section class="card verification-card" aria-labelledby="verification-heading">
+        <div class="card-header-row">
+          <h2 id="verification-heading">Proof Verification Status</h2>
+          <div id="root-status-pill" class="status-pill pill-ready">READY</div>
+        </div>
+
+        <div class="metrics-strip">
+          <div class="metric-box">
+            <span class="metric-label">Verification Time</span>
+            <span id="exec-time-badge" class="metric-val">0.000 ms</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Tree Depth</span>
+            <span id="tree-depth-stat" class="metric-val">Depth 0</span>
+          </div>
+        </div>
+
+        <div class="hash-comparison">
+          <div class="hash-row">
+            <span class="field-label">Stored Merkle Root</span>
+            <code id="expected-root-hash" class="hash-readout">—</code>
+          </div>
+          <div class="hash-row">
+            <span class="field-label">Computed Proof Root</span>
+            <code id="computed-root-hash" class="hash-readout">—</code>
+          </div>
+          <div class="hash-row">
+            <span class="field-label">Verified Leaf Payload</span>
+            <div id="selected-leaf-payload" class="payload-readout">—</div>
+          </div>
+        </div>
+
+        <p id="verification-detail" class="verification-detail">
+          Select a leaf node to inspect its cryptographic audit path.
+        </p>
+
+        <div class="control-row">
+          <button id="verify-proof-btn" type="button" class="btn btn-verify">Verify Proof</button>
+          <button id="tamper-btn" type="button" class="btn btn-tamper">Simulate Tamper</button>
+          <button id="restore-btn" type="button" class="btn btn-secondary" disabled>Restore Integrity</button>
+        </div>
+
+        <div class="audit-path-section">
+          <span class="field-label">Cryptographic Audit Path (Sibling Hashes)</span>
+          <ul id="proof-path-list" class="proof-path-list"></ul>
+        </div>
+      </section>
+
+      <!-- Tree Depth Visualizer -->
+      <section class="card visualizer-card" aria-labelledby="visualizer-heading">
+        <div class="card-header-row">
+          <h2 id="visualizer-heading">Balanced Binary Tree Depth Visualizer</h2>
+          <div class="legend-group">
+            <span class="legend-chip chip-verified">Audit Path</span>
+            <span class="legend-chip chip-sibling">Proof Sibling</span>
+            <span class="legend-chip chip-tampered">Tamper Mismatch</span>
+          </div>
+        </div>
+        <p class="card-desc">
+          Click any leaf node (L0) to generate its Merkle inclusion proof and trace its upward hash path to the root.
+        </p>
+        <div id="tree-visualizer" class="tree-visualizer"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="merkle-verifier.js"></script>
+</body>
+</html>

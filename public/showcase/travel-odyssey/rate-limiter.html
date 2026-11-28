@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TravelOdyssey - Token Bucket Rate Limiter</title>
   <link rel="stylesheet" href="rate-limiter.css">
 </head>
@@ -9,7 +10,106 @@
   <div class="limiter-container">
     <h1>TravelOdyssey Rate Limiter</h1>
     <p>Token Bucket concurrency & burst throttling engine</p>
+
+    <!-- Controls Section -->
+    <div class="controls-section">
+      <h2>Simulator Controls</h2>
+      <div class="control-panel">
+        <button id="btn-consume1" class="control-btn">Consume 1 Token</button>
+        <button id="btn-consume5" class="control-btn">Consume 5 Tokens</button>
+        <button id="btn-consume10" class="control-btn">Consume 10 Tokens</button>
+        <button id="btn-flood" class="control-btn flood-btn">Flood Attack (50 req)</button>
+        <button id="btn-stop" class="control-btn stop-btn">Stop Flood</button>
+        <button id="btn-enqueue" class="control-btn enqueue-btn">Enqueue Request</button>
+        <button id="btn-tick" class="control-btn tick-btn"> Advance Clock </button>
+        <button id="btn-cancel" class="control-btn cancel-btn">Cancel Request</button>
+      </div>
+
+      <div class="control-panel">
+        <label>Capacity: <span id="ui-capacity">10</span></label>
+        <label>Refill/sec: <span id="ui-refill">2</span></label>
+        <label>Max Concurrent: <span id="ui-concurrent">3</span></label>
+        <label>Max Queue: <span id="ui-queue">100</span></label>
+      </div>
+    </div>
+
+    <!-- Bucket Visualization Section -->
+    <div class="bucket-section">
+      <h2>Token Bucket</h2>
+      <div class="bucket-wrapper">
+        <svg class="liquid-bucket" viewBox="0 0 200 300" aria-label="Token bucket visualizer">
+          <!-- Bucket outline -->
+          <path class="bucket-outline" d="M100 20
+            C50 20 20 60 20 100
+            V260
+            C20 240 50 260 100 260
+            C150 260 180 240 180 100
+            C180 60 150 20 100 20"
+            fill="none" stroke="var(--accent)" stroke-width="4"/>
+          <!-- Liquid level -->
+          <path class="liquid-level" d="M100 V260 L100 260 - 100 100 Z" fill="var(--accent)"/>
+          <!-- Tokens label -->
+          <text class="token-label" x="100" y="40" text-anchor="middle" fill="var(--text)" font-size="14">0 / 10</text>
+          <!-- Refill indicator -->
+          <line class="refill-line" x1="100" y1="100" x2="100" y2="20" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4"/>
+        </svg>
+        <div class="bucket-info">
+          <div class="metric-row">
+            <span class="metric-label">Capacity</span>
+            <span class="metric-value" id="bucket-capacity">10</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Available</span>
+            <span class="metric-value" id="bucket-available">10</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Refill Rate</span>
+            <span class="metric-value" id="bucket-refill">2/sec</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Max Concurrent</span>
+            <span class="metric-value" id="bucket-concurrent">3</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Queue Length</span>
+            <span class="metric-value" id="bucket-queue">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Log Section -->
+    <div class="event-section">
+      <h2>Rate-Limited Event Log</h2>
+      <div class="log-viewer" aria-live="polite" aria-label="Rate limiter event log" id="event-log">
+        <div class="log-empty">No events yet. Start the simulator to see rate-limited events.</div>
+      </div>
+    </div>
+
+    <!-- Metrics Summary -->
+    <div class="metrics-section">
+      <h2>Telemetry Metrics</h2>
+      <div class="metrics-grid">
+        <div class="metric-card accepted">
+          <div class="metric-value" id="metrics-accepted">0</div>
+          <div class="metric-label">Accepted</div>
+        </div>
+        <div class="metric-card throttled">
+          <div class="metric-value" id="metrics-throttled">0</div>
+          <div class="metric-label">Throttled</div>
+        </div>
+        <div class="metric-card completed">
+          <div class="metric-value" id="metrics-completed">0</div>
+          <div class="metric-label">Completed</div>
+        </div>
+        <div class="metric-card cancelled">
+          <div class="metric-value" id="metrics-cancelled">0</div>
+          <div class="metric-label">Cancelled</div>
+        </div>
+      </div>
+    </div>
   </div>
+
   <script type="module" src="rate-limiter.js"></script>
 </body>
 </html>

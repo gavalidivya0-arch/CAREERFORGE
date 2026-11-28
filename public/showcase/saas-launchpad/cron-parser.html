@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CloudPulse Cron Schedule Builder</title>
+  <link rel="stylesheet" href="cron-parser.css">
+</head>
+<body>
+  <main>
+    <a href="index.html">&larr; Back to CloudPulse</a>
+    <h1>Cron schedule builder</h1>
+    <p>Plan recurring jobs such as health checks, usage rollups or billing runs. Times use your local time zone.</p>
+    <form onsubmit="return false">
+      <label>Minute <input data-field value="*/5" autocomplete="off" spellcheck="false"></label>
+      <label>Hour <input data-field value="*" autocomplete="off" spellcheck="false"></label>
+      <label>Day <input data-field value="*" autocomplete="off" spellcheck="false"></label>
+      <label>Month <input data-field value="*" autocomplete="off" spellcheck="false"></label>
+      <label>Weekday <input data-field value="*" autocomplete="off" spellcheck="false"></label>
+    </form>
+    <div class="presets">
+      <button type="button" data-preset="0 * * * *">Hourly usage rollup</button>
+      <button type="button" data-preset="0 2 * * *">Nightly backup</button>
+      <button type="button" data-preset="0 6 1 * *">Monthly billing run</button>
+    </div>
+    <code id="tokens"></code>
+    <p id="explanation" role="status"></p>
+    <h2>Next runs</h2>
+    <ol id="runs"></ol>
+  </main>
+  <script type="module" src="cron-parser.js"></script>
+</body>
+</html>

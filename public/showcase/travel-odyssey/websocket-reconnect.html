@@ -2,14 +2,259 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>TravelOdyssey - Resilient WebSocket</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#04121f">
+  <meta
+    name="description"
+    content="Travel Odyssey resilient WebSocket lab: heartbeat supervision, jittered exponential backoff, and an offline-safe telemetry queue."
+  >
+  <title>Travel Odyssey — Resilient WebSocket Stream</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet"
+  >
   <link rel="stylesheet" href="websocket-reconnect.css">
 </head>
-<body>
-  <div class="ws-container">
-    <h1>TravelOdyssey Resilient WebSocket Stream</h1>
-    <p>Heartbeat management & exponential backoff recovery</p>
-  </div>
+<body class="ws-body">
+  <div class="ws-backdrop" aria-hidden="true"></div>
+
+  <main class="ws-shell">
+    <nav class="ws-topbar" aria-label="Breadcrumb">
+      <a class="ws-back-link" href="index.html">← Odyssey dashboard</a>
+      <span class="ws-endpoint" id="ws-endpoint">wss://live.travel-odyssey.io/stream</span>
+    </nav>
+
+    <header class="ws-hero">
+      <div class="ws-hero-copy">
+        <p class="ws-eyebrow">TRAVEL ODYSSEY · CORE ENGINE</p>
+        <h1>Resilient WebSocket Stream</h1>
+        <p class="ws-lede">
+          A self-healing telemetry channel with ping/pong supervision, jittered exponential
+          backoff, and an offline-safe message queue for expeditions beyond the last cell tower.
+        </p>
+      </div>
+
+      <div
+        class="status-pill"
+        id="ws-status-pill"
+        data-state="DISCONNECTED"
+        role="status"
+        aria-live="polite"
+      >
+        <span class="status-dot" id="ws-status-dot" data-state="DISCONNECTED" aria-hidden="true"></span>
+        <span class="status-copy">
+          <span class="status-label" id="ws-status-text">Disconnected</span>
+          <span class="status-hint" id="ws-status-hint">Stream idle</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="outage-banner" id="ws-outage-banner" role="alert" hidden>
+      <span class="outage-icon" aria-hidden="true">⚡</span>
+      <div>
+        <strong>Simulated outage is active.</strong>
+        <p>New transports refuse to open so the reconnect budget can exhaust into the FAILED state.</p>
+      </div>
+    </div>
+
+    <section class="control-deck" aria-label="Connection controls">
+      <button type="button" class="btn btn-primary" id="btn-connect">Connect stream</button>
+      <button type="button" class="btn" id="btn-disconnect">Disconnect</button>
+      <button type="button" class="btn btn-danger" id="btn-drop">Simulate drop</button>
+      <button type="button" class="btn btn-ghost" id="btn-outage" aria-pressed="false">Simulate outage</button>
+      <button type="button" class="btn btn-ghost" id="btn-burst">Send burst</button>
+      <button type="button" class="btn btn-ghost" id="btn-clear-queue">Clear queue</button>
+      <button type="button" class="btn btn-ghost btn-reset" id="btn-reset">Reset demo</button>
+    </section>
+
+    <section class="metric-grid" aria-label="Live connection metrics">
+      <article class="metric-card">
+        <span class="metric-label">Reconnect attempt</span>
+        <strong class="metric-value" id="metric-attempt">0/4</strong>
+        <span class="metric-foot">of the retry budget</span>
+      </article>
+      <article class="metric-card metric-card-wide">
+        <div class="metric-row">
+          <span class="metric-label">Next retry</span>
+          <strong class="metric-value metric-value-amber" id="metric-retry">—</strong>
+        </div>
+        <div class="retry-track" id="retry-track" data-active="false" aria-hidden="true">
+          <span class="retry-fill" id="retry-fill"></span>
+        </div>
+        <span class="metric-foot">jittered backoff countdown</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Heartbeat RTT</span>
+        <strong class="metric-value metric-value-emerald" id="metric-latency">—</strong>
+        <span class="metric-foot">last pong latency</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Offline queue</span>
+        <strong class="metric-value" id="metric-queue">0</strong>
+        <span class="metric-foot">packets buffered</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Delivered</span>
+        <strong class="metric-value" id="metric-delivered">0</strong>
+        <span class="metric-foot">packets on the wire</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Ping / pong</span>
+        <strong class="metric-value" id="metric-heartbeat">—</strong>
+        <span class="metric-foot">heartbeat ledger</span>
+      </article>
+    </section>
+
+    <div class="ws-workspace">
+      <section class="panel timeline-panel" aria-labelledby="timeline-title">
+        <header class="panel-head">
+          <div>
+            <h2 id="timeline-title">Connection timeline</h2>
+            <p>Every handshake, heartbeat, queue flush, and retry in order.</p>
+          </div>
+          <div class="panel-tools">
+            <span class="chip" id="timeline-count">0 events</span>
+            <button type="button" class="btn btn-mini" id="btn-clear-timeline">Clear</button>
+          </div>
+        </header>
+        <ol class="timeline" id="ws-timeline" role="log" aria-live="polite" aria-relevant="additions"></ol>
+      </section>
+
+      <div class="side-stack">
+        <section class="panel heartbeat-panel" aria-labelledby="heartbeat-title">
+          <header class="panel-head">
+            <div>
+              <h2 id="heartbeat-title">Heartbeat supervision</h2>
+              <p>Ping/pong liveness with a pong deadline.</p>
+            </div>
+          </header>
+          <div class="heartbeat-visual">
+            <span class="heartbeat-pulse" id="heartbeat-pulse" aria-hidden="true"></span>
+            <div class="heartbeat-copy">
+              <strong id="heartbeat-label">Idle</strong>
+              <span id="heartbeat-sub">Heartbeat starts when the stream opens</span>
+            </div>
+          </div>
+          <dl class="heartbeat-facts">
+            <div>
+              <dt>Ping interval</dt>
+              <dd id="heartbeat-interval">2.4s</dd>
+            </div>
+            <div>
+              <dt>Pong deadline</dt>
+              <dd id="heartbeat-deadline">1.4s</dd>
+            </div>
+            <div>
+              <dt>Pong / ping</dt>
+              <dd id="heartbeat-counts">0 / 0</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="panel backoff-panel" aria-labelledby="backoff-title">
+          <header class="panel-head">
+            <div>
+              <h2 id="backoff-title">Backoff ladder</h2>
+              <p id="backoff-formula">min(12000 ms, 800 ms × 2^attempt) + jitter</p>
+            </div>
+          </header>
+          <ol class="backoff-chart" id="backoff-chart"></ol>
+          <p class="backoff-note">
+            Equal jitter keeps 50–100% of each capped delay, so a fleet of reconnecting
+            clients never stampedes the gateway at the same instant.
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <div class="message-grid">
+      <section class="panel composer-panel" aria-labelledby="composer-title">
+        <header class="panel-head">
+          <div>
+            <h2 id="composer-title">Outbound channel</h2>
+            <p>Send now when live, or buffer until the link returns.</p>
+          </div>
+        </header>
+        <form class="composer" id="message-form">
+          <label class="sr-only" for="message-input">Telemetry message</label>
+          <input
+            type="text"
+            id="message-input"
+            name="message"
+            class="composer-input"
+            placeholder="Type a telemetry packet…"
+            maxlength="280"
+            autocomplete="off"
+          >
+          <button type="submit" class="btn btn-primary">Send packet</button>
+        </form>
+        <div class="quick-chips" aria-label="Quick packets">
+          <button type="button" class="quick-chip" data-payload="Share live location">📍 Live location</button>
+          <button type="button" class="quick-chip" data-payload="Update booking status">🧾 Booking update</button>
+          <button type="button" class="quick-chip" data-payload="Ping expedition basecamp">🏕️ Basecamp ping</button>
+        </div>
+        <p class="composer-status" id="composer-status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="panel queue-panel" aria-labelledby="queue-title">
+        <header class="panel-head">
+          <div>
+            <h2 id="queue-title">Offline queue</h2>
+            <p>FIFO buffer drained on reconnect.</p>
+          </div>
+          <span class="chip chip-amber" id="queue-count">0</span>
+        </header>
+        <ul class="queue-list" id="queue-list"></ul>
+      </section>
+
+      <section class="panel delivered-panel" aria-labelledby="delivered-title">
+        <header class="panel-head">
+          <div>
+            <h2 id="delivered-title">Delivered</h2>
+            <p>Most recent packets accepted by the stream.</p>
+          </div>
+          <span class="chip chip-emerald" id="delivered-count">0</span>
+        </header>
+        <ul class="delivered-list" id="delivered-list"></ul>
+      </section>
+    </div>
+
+    <section class="how-grid" aria-label="How the engine works">
+      <article class="how-card">
+        <span class="how-index">01</span>
+        <h2>Heartbeat</h2>
+        <p>
+          Every <code>heartbeatIntervalMs</code> the client writes a ping. A pong must arrive
+          before <code>pongTimeoutMs</code>, otherwise the transport is recycled and the retry
+          ladder starts.
+        </p>
+      </article>
+      <article class="how-card">
+        <span class="how-index">02</span>
+        <h2>Backoff</h2>
+        <p>
+          <code>min(max, base × 2^attempt)</code> grows the delay, then equal jitter spreads
+          reconnects across 50–100% of the capped window.
+        </p>
+      </article>
+      <article class="how-card">
+        <span class="how-index">03</span>
+        <h2>Offline queue</h2>
+        <p>
+          Packets sent while the socket is down are buffered in FIFO order and flushed the
+          moment the next handshake completes.
+        </p>
+      </article>
+    </section>
+
+    <footer class="ws-footer">
+      <span>Travel Odyssey · resilient transport lab</span>
+      <span class="footer-note">Simulated transport · no external server required</span>
+    </footer>
+  </main>
+
   <script type="module" src="websocket-reconnect.js"></script>
 </body>
 </html>

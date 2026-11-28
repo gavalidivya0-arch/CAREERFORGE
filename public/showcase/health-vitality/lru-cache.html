@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HealthVitality - LRU In-Memory Cache</title>
   <link rel="stylesheet" href="lru-cache.css">
 </head>
@@ -9,7 +10,49 @@
   <div class="lru-container">
     <h1>HealthVitality LRU In-Memory Cache</h1>
     <p>O(1) Hash-Map and Doubly-Linked-List backed cache with live eviction tracking</p>
+
+    <!-- Controls Panel -->
+    <div class="lru-controls">
+      <div class="control-group">
+        <label for="cache-capacity">Cache Capacity</label>
+        <input type="range" id="cache-capacity" min="1" max="50" value="5">
+        <span id="capacity-value" class="capacity-value">5</span>
+      </div>
+
+      <div class="control-group">
+        <label for="key-input">Key</label>
+        <input type="text" id="key-input" placeholder="Enter key">
+      </div>
+
+      <div class="control-group">
+        <label for="value-input">Value</label>
+        <input type="text" id="value-input" placeholder="Enter value">
+      </div>
+
+      <button id="put-btn" class="btn-primary">Put Entry</button>
+    </div>
+
+    <!-- Cache Display -->
+    <div class="lru-display">
+      <div class="lru-head">
+        <span>Ordered Node Chain</span>
+        <span id="memory-occupancy" class="memory-occupancy">Memory: 0%</span>
+      </div>
+      <div class="lru-nodes" id="node-chain">
+        <!-- Nodes rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Eviction Log -->
+    <div class="lru-eviction">
+      <span>Eviction Log</span>
+      <ol id="eviction-log" class="eviction-log">
+        <!-- Eviction entries rendered by JS -->
+        <li class="empty-log">No evictions yet</li>
+      </ol>
+    </div>
   </div>
+
   <script type="module" src="lru-cache.js"></script>
 </body>
 </html>

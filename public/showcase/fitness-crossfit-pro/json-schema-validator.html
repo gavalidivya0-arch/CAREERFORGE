@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Interactive client-side JSON payload schema validator and lint inspector for Fitness Crossfit Pro (PULSE-WOD)."
+  />
+  <title>PULSE-WOD // JSON Payload Schema Validator &amp; Lint Inspector — Fitness Crossfit Pro</title>
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="./json-schema-validator.css" />
+</head>
+<body class="schema-body">
+  <header class="glass-nav">
+    <div class="nav-left">
+      <a class="brand" href="./index.html">
+        <span aria-hidden="true">&#9889;</span>
+        <span>PULSE-WOD</span>
+      </a>
+      <span class="nav-divider" aria-hidden="true">/</span>
+      <span class="nav-subtitle">Schema Lint Inspector</span>
+    </div>
+    <div class="nav-badge">FITNESS CROSSFIT PRO &middot; CLIENT-SIDE VALIDATOR</div>
+  </header>
+
+  <main class="schema-shell" data-schema-lab>
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">TELEMETRY INTEGRITY / JSON SCHEMA LINTER</p>
+      <h1 id="page-title">Validate workout &amp; biometric payloads in real time.</h1>
+      <p class="lede">
+        Inspect nested Fitness Crossfit Pro telemetry against strict JSON Schema rules before ingestion.
+        Catches JSON syntax errors, missing required keys, type mismatches, numeric bounds, patterns,
+        enum drift, and unexpected properties with exact payload line callouts.
+      </p>
+      <ul class="feature-list" aria-label="Validator capabilities">
+        <li>Nested Object &amp; Array Checks</li>
+        <li>Type &amp; Union Verification</li>
+        <li>JSON Pointer Line Callouts</li>
+        <li>Zero External Dependencies</li>
+      </ul>
+    </section>
+
+    <section class="controls" aria-label="Schema template and validation controls">
+      <div class="control-group">
+        <label for="template-select">Schema Template</label>
+        <select id="template-select">
+          <option value="wodSession">WOD Telemetry Session &middot; Valid</option>
+          <option value="athleteProfile">Athlete Biometric Profile &middot; Valid</option>
+          <option value="leaderboardEntry">Open Qualifier Score &middot; Valid</option>
+          <option value="mismatch">HIIT Sensor Payload &middot; Mismatch Demo</option>
+        </select>
+      </div>
+
+      <div class="control-actions">
+        <button id="validate-btn" class="btn btn-primary" type="button">Run Validation</button>
+        <button id="format-btn" class="btn btn-secondary" type="button">Format JSON</button>
+        <button id="reset-btn" class="btn btn-ghost" type="button">Reset Template</button>
+      </div>
+
+      <span id="status-badge" class="pill pill--pending" role="status" aria-live="polite">READY</span>
+    </section>
+
+    <div class="split-pane">
+      <section class="editor-pane" id="schema-pane" aria-labelledby="schema-title">
+        <header class="pane-head">
+          <div class="pane-title">
+            <span class="pane-index" aria-hidden="true">01</span>
+            <h2 id="schema-title">JSON Schema Definition</h2>
+          </div>
+          <div class="pane-status-group">
+            <span id="schema-pane-state" class="pane-state pane-state--ok">JSON OK</span>
+            <span id="schema-meta" class="pane-meta">0 lines &middot; 0 chars</span>
+          </div>
+        </header>
+        <label class="sr-only" for="schema-input">JSON Schema definition</label>
+        <textarea
+          id="schema-input"
+          spellcheck="false"
+          autocomplete="off"
+          aria-describedby="schema-hint"
+        ></textarea>
+        <p id="schema-hint" class="pane-hint">
+          Supports required fields, types, ranges, patterns, enums, uniqueItems, additionalProperties, and combinators.
+        </p>
+      </section>
+
+      <section class="editor-pane" id="payload-pane" aria-labelledby="payload-title">
+        <header class="pane-head">
+          <div class="pane-title">
+            <span class="pane-index" aria-hidden="true">02</span>
+            <h2 id="payload-title">JSON Payload Input</h2>
+          </div>
+          <div class="pane-status-group">
+            <span id="payload-pane-state" class="pane-state pane-state--ok">JSON OK</span>
+            <span id="payload-meta" class="pane-meta">0 lines &middot; 0 chars</span>
+          </div>
+        </header>
+        <label class="sr-only" for="payload-input">JSON payload to validate</label>
+        <textarea
+          id="payload-input"
+          spellcheck="false"
+          autocomplete="off"
+          aria-describedby="payload-hint"
+        ></textarea>
+        <p id="payload-hint" class="pane-hint">
+          Live lint runs automatically on every keystroke. Click any error callout below to jump to its line.
+        </p>
+      </section>
+    </div>
+
+    <section class="report-card" aria-labelledby="report-title">
+      <header class="report-head">
+        <div>
+          <p class="eyebrow">LINT DIAGNOSTICS</p>
+          <h2 id="report-title">Validation Report</h2>
+        </div>
+        <div class="report-head-right">
+          <span id="report-badge" class="pill pill--pending">IDLE</span>
+          <div class="report-counter">
+            <strong id="error-count">0</strong>
+            <span id="error-label">violations</span>
+          </div>
+        </div>
+      </header>
+
+      <p id="report-summary" class="report-summary">Select a template or paste JSON to inspect.</p>
+
+      <ol id="error-list" class="error-list" aria-live="polite"></ol>
+
+      <details class="raw-report-wrap">
+        <summary>Formatted Plain-Text Report</summary>
+        <div class="raw-report-toolbar">
+          <button id="copy-report-btn" class="btn btn-secondary btn-xs" type="button">Copy Report</button>
+        </div>
+        <pre id="raw-report" class="raw-report">No validation run yet.</pre>
+      </details>
+    </section>
+
+    <footer class="schema-footer">
+      PULSE-WOD Isolated Showcase Module &middot; 100% Client-Side Schema Validation (No Network Calls).
+    </footer>
+  </main>
+
+  <script type="module" src="./json-schema-validator.js"></script>
+</body>
+</html>

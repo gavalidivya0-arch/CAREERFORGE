@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agritech Precision Farming - Distributed Raft Consensus</title>
+  <link rel="stylesheet" href="./raft-consensus.css">
+</head>
+<body>
+  <main class="raft-container" data-raft-lab>
+    <header class="raft-header">
+      <div class="header-badge">AGRITECH-RAFT-ENGINE v3.0</div>
+      <h1>Distributed Raft Consensus &amp; Leader Election</h1>
+      <p class="subtitle">Fault-tolerant distributed state machine simulator for automated precision irrigation sensors, valve actuators, and telemetry log replication.</p>
+      
+      <!-- Cluster overview & metrics bar -->
+      <div class="cluster-status-bar">
+        <div class="status-chip" id="term-chip">Term: <strong id="current-term-val">1</strong></div>
+        <div class="status-chip" id="leader-chip">Leader: <strong id="current-leader-val">None</strong></div>
+        <div class="status-chip" id="quorum-chip">Quorum: <strong id="quorum-val">3 of 5 Nodes</strong></div>
+        <div class="status-chip" id="logs-chip">Committed Logs: <strong id="committed-logs-val">0</strong></div>
+      </div>
+    </header>
+
+    <!-- Cluster interactive controls -->
+    <section class="controls-toolbar">
+      <div class="toolbar-group">
+        <label for="cluster-size">Cluster Size:</label>
+        <select id="cluster-size" class="control-select">
+          <option value="5" selected>5-Node Cluster (Quorum: 3)</option>
+          <option value="3">3-Node Cluster (Quorum: 2)</option>
+        </select>
+      </div>
+
+      <div class="toolbar-buttons">
+        <button id="election-btn" class="action-btn election-btn">⚡ Trigger Election</button>
+        <button id="heartbeat-btn" class="action-btn heartbeat-btn">💓 Pulse Heartbeats</button>
+        <button id="kill-leader-btn" class="action-btn kill-btn">🛑 Drop Leader</button>
+        <button id="partition-btn" class="action-btn partition-btn">🔀 Partition Minority (Nodes 4,5)</button>
+      </div>
+    </section>
+
+    <!-- Log entry submission bar -->
+    <section class="log-input-section">
+      <label for="command-input">Replicate Agritech Command:</label>
+      <div class="input-row">
+        <input id="command-input" class="command-input" value="set_irrigation_valve_zone_3: 85L/min" placeholder="Enter sensor or valve command...">
+        <button id="replicate-btn" class="primary-btn">📥 Replicate &amp; Commit Log</button>
+      </div>
+      <p id="replicate-status" class="replicate-status" role="status"></p>
+    </section>
+
+    <!-- Cluster diagram with 3-node or 5-node cards -->
+    <section class="cluster-diagram-section">
+      <div class="section-title">
+        <h2>Cluster Topology &amp; Node States</h2>
+        <span class="legend-items">
+          <span class="legend-badge leader-glow">Leader</span>
+          <span class="legend-badge follower-glow">Follower</span>
+          <span class="legend-badge candidate-glow">Candidate</span>
+          <span class="legend-badge dead-glow">Failed</span>
+        </span>
+      </div>
+
+      <!-- Node cards container -->
+      <div id="nodes-container" class="nodes-grid"></div>
+
+      <!-- Packet travel animation overlay -->
+      <div id="packet-overlay" class="packet-overlay" aria-hidden="true"></div>
+    </section>
+
+    <!-- Log replication viewer -->
+    <section class="log-viewer-section">
+      <div class="viewer-header">
+        <h2>Distributed Replicated Log Journal</h2>
+        <span id="log-count-tag" class="count-tag">0 entries committed</span>
+      </div>
+      <div class="log-table-wrapper">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Index</th>
+              <th>Term</th>
+              <th>Command Payload</th>
+              <th>Commit Status</th>
+              <th>Replicated Nodes</th>
+            </tr>
+          </thead>
+          <tbody id="log-entries-body">
+            <tr>
+              <td colspan="5" class="empty-log-msg">No commands replicated yet. Use the replicate input above.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./raft-consensus.js"></script>
+</body>
+</html>

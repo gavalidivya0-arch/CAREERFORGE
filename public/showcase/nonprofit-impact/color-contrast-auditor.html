@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TerraInitia Colour Contrast Auditor</title>
+  <link rel="stylesheet" href="color-contrast-auditor.css">
+</head>
+<body>
+  <main>
+    <a href="index.html">&larr; Back to TerraInitia</a>
+    <h1>Colour contrast auditor</h1>
+    <p>Check that campaign and donation page colours stay readable under WCAG 2.1.</p>
+    <section class="pickers">
+      <fieldset>
+        <legend>Text</legend>
+        <input type="color" id="fg-picker" value="#86efac" aria-label="Pick text colour">
+        <input id="fg-hex" value="#86efac" aria-label="Text colour hex" spellcheck="false">
+      </fieldset>
+      <fieldset>
+        <legend>Background</legend>
+        <input type="color" id="bg-picker" value="#06180e" aria-label="Pick background colour">
+        <input id="bg-hex" value="#06180e" aria-label="Background colour hex" spellcheck="false">
+      </fieldset>
+      <button type="button" id="swap">Swap colours</button>
+    </section>
+    <p id="error" role="alert"></p>
+    <div role="status">Contrast ratio <output id="ratio">--</output></div>
+    <meter id="gauge" min="0" max="21" low="3" high="4.5" optimum="21" aria-label="Contrast ratio out of 21"></meter>
+    <ul id="results"></ul>
+    <div id="preview">
+      <h2>10,000 saplings planted</h2>
+      <p>Normal text sample: every donation is matched to a verified restoration project.</p>
+    </div>
+  </main>
+  <script type="module" src="color-contrast-auditor.js"></script>
+</body>
+</html>

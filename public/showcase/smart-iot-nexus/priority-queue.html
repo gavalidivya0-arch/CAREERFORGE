@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart IoT Nexus - Binary Heap Priority Event Queue</title>
+  <link rel="stylesheet" href="priority-queue.css">
+</head>
+<body>
+  <div class="pq-container">
+    <header class="pq-header">
+      <div class="pq-badge">Priority Queue</div>
+      <h1>Smart IoT Nexus Priority Event Queue</h1>
+      <p>Binary min-heap with token-bucket dispatch pacing and backpressure metrics</p>
+    </header>
+
+    <main class="pq-main">
+      <section class="pq-enqueue-panel">
+        <h2>Enqueue Event</h2>
+        <form id="enqueueForm" class="pq-form">
+          <div class="pq-form-group">
+            <label for="pqPayload" class="pq-form-label">Payload</label>
+            <input type="text" id="pqPayload" name="payload" required
+                   class="pq-form-input" placeholder="Event data...">
+          </div>
+          <div class="pq-form-group">
+            <label for="pqPriority" class="pq-form-label">Priority</label>
+            <select id="pqPriority" name="priority" class="pq-form-select">
+              <option value="1">1 - Urgent</option>
+              <option value="2">2 - High</option>
+              <option value="3">3 - Normal</option>
+              <option value="4">4 - Low</option>
+            </select>
+          </div>
+          <button type="submit" class="pq-btn">Dispatch Event</button>
+        </form>
+      </section>
+
+      <section class="pq-stats-panel">
+        <h2>Queue Metrics</h2>
+        <div class="pq-stats-grid">
+          <div class="pq-stat-card">
+            <div class="pq-stat-value" id="pqQueueDepth">0</div>
+            <div class="pq-stat-label">Queue Depth</div>
+          </div>
+          <div class="pq-stat-card">
+            <div class="pq-stat-value" id="pqProcessedCount">0</div>
+            <div class="pq-stat-label">Processed</div>
+          </div>
+          <div class="pq-stat-card">
+            <div class="pq-stat-value" id="pqBackpressureCount">0</div>
+            <div class="pq-stat-label">Backpressure</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section class="pq-dispatch-panel">
+      <h2>Dispatch Control</h2>
+      <form id="dispatchForm" class="pq-form">
+        <div class="pq-form-group">
+          <label for="pqRateLimit" class="pq-form-label">Dispatch Rate (ms)</label>
+          <input type="range" id="pqRateLimit" name="rateLimit"
+                 min="50" max="5000" step="50" value="500"
+                 class="pq-rate-slider">
+          <span id="pqRateValue">500</span> ms
+        </div>
+        <button type="submit" class="pq-btn">Start Dispatcher</button>
+      </form>
+    </section>
+  </section>
+
+  <section class="pq-events-panel">
+    <h2>Processed Event Feed</h2>
+    <div class="pq-event-feed" id="pqEventFeed">
+      <div class="pq-empty-state">No events yet. Enqueue an event to begin.</div>
+    </div>
+  </section>
+</body>
+</html>

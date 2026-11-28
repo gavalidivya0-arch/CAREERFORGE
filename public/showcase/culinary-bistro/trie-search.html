@@ -2,14 +2,173 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CulinaryBistro - Prefix Tree Search</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="In-browser prefix tree typeahead with Levenshtein spell correction and an interactive trie visualizer for the Culinary Bistro lexicon.">
+  <title>Culinary Bistro — Trie typeahead &amp; spell distance</title>
   <link rel="stylesheet" href="trie-search.css">
-</head>
-<body>
-  <div class="trie-container">
-    <h1>CulinaryBistro Trie Engine</h1>
-    <p>Prefix tree autocomplete & typo distance engine</p>
-  </div>
   <script type="module" src="trie-search.js"></script>
+</head>
+<body class="trie-page">
+  <main class="trie-lab" data-trie-lab>
+    <header class="topbar">
+      <a class="back-link" href="./index.html">← LUMIÈRE</a>
+      <span class="topbar-note">Prefix tree · Levenshtein · 100% in-memory</span>
+    </header>
+
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">CULINARY BISTRO / LEXICON INFRASTRUCTURE</p>
+      <h1 id="page-title">Type less. Find the dish.</h1>
+      <p class="lede">
+        Walk a prefix tree one character at a time, then let a Levenshtein pass rescue the
+        typos. Every branch, completion, and edit cost is computed locally in your browser.
+      </p>
+
+      <dl class="hero-stats" aria-label="Lexicon statistics">
+        <div class="stat">
+          <dt>Terms</dt>
+          <dd><output id="stat-terms">0</output></dd>
+        </div>
+        <div class="stat">
+          <dt>Tree nodes</dt>
+          <dd><output id="stat-nodes">0</output></dd>
+        </div>
+        <div class="stat">
+          <dt>Current matches</dt>
+          <dd><output id="stat-matches">0</output></dd>
+        </div>
+        <div class="stat">
+          <dt>Deepest branch</dt>
+          <dd><output id="stat-depth">0</output></dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="search-stage" aria-labelledby="search-title">
+      <div class="panel search-panel">
+        <div class="panel-head">
+          <div>
+            <p class="panel-kicker">01 / TYPEAHEAD</p>
+            <h2 id="search-title">Find a term</h2>
+          </div>
+          <div class="mode-switch" role="group" aria-label="Search mode">
+            <button type="button" class="mode-btn is-active" data-mode="prefix" aria-pressed="true">Prefix</button>
+            <button type="button" class="mode-btn" data-mode="fuzzy" aria-pressed="false">Fuzzy</button>
+          </div>
+        </div>
+
+        <label class="sr-only" for="trie-query">Search the bistro lexicon</label>
+        <div class="search-box">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input
+            id="trie-query"
+            type="text"
+            role="combobox"
+            aria-expanded="false"
+            aria-controls="trie-suggestions"
+            aria-autocomplete="list"
+            aria-describedby="trie-status"
+            autocomplete="off"
+            spellcheck="false"
+            maxlength="64"
+            placeholder="Try “truf”, “safr”, or “choc”"
+          >
+          <button type="button" id="trie-clear" class="clear-btn" aria-label="Clear search" hidden>×</button>
+        </div>
+
+        <div class="search-meta">
+          <p id="trie-status" class="search-status" role="status" aria-live="polite">
+            0 terms indexed. Start typing to walk the prefix tree.
+          </p>
+          <label class="distance-control" id="trie-distance-control" for="trie-distance" hidden>
+            <span>Max distance</span>
+            <select id="trie-distance">
+              <option value="1">Δ 1</option>
+              <option value="2" selected>Δ 2</option>
+              <option value="3">Δ 3</option>
+            </select>
+          </label>
+        </div>
+
+        <ul id="trie-suggestions" class="suggestions" role="listbox" aria-label="Typeahead suggestions"></ul>
+
+        <div class="samples" aria-label="Sample searches">
+          <span class="samples-label">Try</span>
+          <button type="button" class="sample-chip" data-sample-query="truf">truf</button>
+          <button type="button" class="sample-chip" data-sample-query="safr">safr</button>
+          <button type="button" class="sample-chip" data-sample-query="choc">choc</button>
+          <button type="button" class="sample-chip" data-sample-query="trufel">trufel</button>
+          <span class="samples-hint">Switch to Fuzzy for typos.</span>
+        </div>
+      </div>
+
+      <aside class="panel trace-panel" aria-labelledby="trace-title">
+        <div class="panel-head">
+          <div>
+            <p class="panel-kicker">02 / DISTANCE</p>
+            <h2 id="trace-title">Edit trace</h2>
+          </div>
+          <span id="trace-distance" class="trace-badge">—</span>
+        </div>
+        <p id="trace-caption" class="trace-caption">
+          Prefix mode shows the trie walk. Fuzzy mode shows the Levenshtein matrix for the best candidate.
+        </p>
+        <div id="trie-trace" class="trace-body"></div>
+      </aside>
+    </section>
+
+    <section class="panel lexicon-panel" aria-labelledby="lexicon-title">
+      <div class="lexicon-copy">
+        <p class="panel-kicker">03 / LEXICON</p>
+        <h2 id="lexicon-title">Grow the tree</h2>
+        <p>Insert a dish, ingredient, or technique. Duplicates are ignored case-insensitively.</p>
+      </div>
+
+      <form id="trie-add-form" class="add-form">
+        <label class="sr-only" for="trie-add-input">New lexicon term</label>
+        <input
+          id="trie-add-input"
+          type="text"
+          maxlength="64"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="e.g. black garlic"
+        >
+        <button type="submit" class="primary-btn">Insert term</button>
+      </form>
+
+      <div class="lexicon-actions">
+        <button type="button" id="trie-seed" class="ghost-btn">Reset to bistro lexicon</button>
+        <p id="trie-add-status" class="add-status" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="panel tree-stage" aria-labelledby="tree-title">
+      <div class="panel-head tree-head">
+        <div>
+          <p class="panel-kicker">04 / HIERARCHY</p>
+          <h2 id="tree-title">Prefix tree</h2>
+          <p class="tree-hint">Click a character to search that prefix. Use the chevron to open a branch.</p>
+        </div>
+        <div class="tree-actions">
+          <span id="tree-count" class="tree-count">0 nodes</span>
+          <button type="button" id="tree-expand" class="ghost-btn">Expand all</button>
+          <button type="button" id="tree-collapse" class="ghost-btn">Collapse</button>
+        </div>
+      </div>
+      <div id="trie-tree" class="tree-scroll"></div>
+    </section>
+
+    <footer class="lab-footer">
+      <p>
+        Built on a <strong>prefix tree</strong> with a row-pruned <strong>Levenshtein</strong> pass.
+        Prefix lookups are O(prefix length); fuzzy candidates prune whole subtrees once their edit row exceeds the budget.
+      </p>
+      <a href="./index.html">Back to Lumière →</a>
+    </footer>
+
+    <noscript>
+      <p class="noscript">The trie lab runs entirely in your browser. Enable JavaScript to search the lexicon.</p>
+    </noscript>
+  </main>
 </body>
 </html>

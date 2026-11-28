@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeFi Yield Matrix - Immutable State Snapshot & Time-Travel Debugger</title>
+  <link rel="stylesheet" href="snapshot-time-travel.css">
+</head>
+<body>
+  <div class="time-travel-container">
+    <header class="time-travel-header">
+      <div class="badge-tag">State Snapshot Engine</div>
+      <h1>Immutable State Timeline & Time-Travel</h1>
+      <p>Serializible state snapshots, visual object diffs, and bidirectional scrub playback with breakpoint inspection.</p>
+    </header>
+
+    <section class="timeline-panel">
+      <div class="scrubber-header">
+        <h2>History Timeline Scrubber</h2>
+        <div class="frame-cursor" id="frameCursor">Frame: 0</div>
+      </div>
+
+      <input type="range" id="timelineSlider" class="scrubber-slider" min="0" max="0" value="0">
+
+      <div class="controls-panel">
+        <button id="btnUndo" class="control-btn" disabled>Undo</button>
+        <button id="btnRedo" class="control-btn" disabled>Redo</button>
+        <button id="btnStepBack" class="control-btn" disabled>Step Back</button>
+        <button id="btnStepForward" class="control-btn" disabled>Step Forward</button>
+        <button id="btnPlay" class="control-btn play-btn">Play</button>
+        <button id="btnExport" class="control-btn btn-primary">Export JSON</button>
+      </div>
+    </section>
+
+    <div class="diff-inspector-card">
+      <div class="inspector-split">
+        <div>
+          <h3>Current State Snapshot (JSON)</h3>
+          <pre class="json-view" id="stateJsonView"></pre>
+        </div>
+        <div>
+          <h3>Property Diff Inspector</h3>
+          <div class="diff-container" id="diffViewContainer">
+            <!-- Diff rows render here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="history-log-panel">
+      <h3>Snapshot History Log</h3>
+      <div class="action-list" id="actionHistoryList">
+        <!-- Snapshots render here -->
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="snapshot-time-travel.js"></script>
+</body>
+</html>

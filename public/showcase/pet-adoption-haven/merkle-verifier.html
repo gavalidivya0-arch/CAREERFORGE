@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Adoption Haven - Merkle Tree Integrity &amp; Cryptographic Proof Verifier</title>
+  <link rel="stylesheet" href="./merkle-verifier.css">
+</head>
+<body>
+  <main class="merkle-container" data-merkle-lab>
+    <header class="merkle-header">
+      <a href="index.html" class="back-link">&larr; Back to Pet Adoption Haven</a>
+      <div class="header-badge">SHELTER-CRYPTO-AUDIT v3.2</div>
+      <h1>Merkle Tree Cryptographic Proof Verifier</h1>
+      <p class="subtitle">Cryptographic inclusion audit and data integrity verification for shelter pet medical registries, rabies certificates, microchip hashes, and legal adoption deeds.</p>
+
+      <!-- Status Summary Chips -->
+      <div class="summary-chips-bar">
+        <div class="chip">Root Hash: <span id="root-chip-val" class="hash-pill">Computing...</span></div>
+        <div class="chip">Tree Depth: <strong id="depth-chip-val">0 Levels</strong></div>
+        <div class="chip">Registry Leaves: <strong id="leaves-chip-val">0 Records</strong></div>
+        <div class="chip">Integrity Status: <span id="integrity-chip" class="status-pill status-verified">SECURE</span></div>
+      </div>
+    </header>
+
+    <div class="merkle-layout-grid">
+      <!-- Left Column: Dataset Input & Tamper Controls -->
+      <section class="controls-panel">
+        <div class="panel-card">
+          <div class="card-title-row">
+            <h2>Pet Registry Records Dataset</h2>
+            <button id="reset-dataset-btn" type="button" class="link-btn">Reset Defaults</button>
+          </div>
+          <p class="section-desc">Each line represents an immutable shelter certificate, microchip registry entry, or adoption transfer leaf.</p>
+
+          <div id="dataset-input-container" class="dataset-input-container">
+            <textarea id="dataset-textarea" class="dataset-textarea" rows="6" aria-label="Pet records lines">Pet ID #P-101: Milo (Beagle) - Rabies Vaccination Certificate #RV-9824
+Pet ID #P-102: Luna (Tabby Cat) - Microchip ISO Registry #9851410029
+Pet ID #P-103: Barnaby (Golden Retriever) - Spay/Neuter Verification Certificate
+Pet ID #P-104: Cleo (Border Collie) - Legal Adoption Deed &amp; Transfer of Custody
+Pet ID #P-105: Oliver (Persian Cat) - Veterinary Health Clearance &amp; Quarantine Pass</textarea>
+          </div>
+
+          <div class="btn-group">
+            <button id="rebuild-tree-btn" type="button" class="primary-btn">🌲 Rebuild Merkle Tree</button>
+            <button id="tamper-btn" type="button" class="danger-btn">⚠️ Simulate Record Tampering</button>
+          </div>
+        </div>
+
+        <!-- Proof Verification Status Card -->
+        <div class="panel-card" id="proof-status-card">
+          <h2>Cryptographic Audit Proof Inspector</h2>
+          <p class="section-desc">Select a specific pet certificate leaf to extract its cryptographic audit path (sibling hashes) and verify against the published Merkle root.</p>
+
+          <div class="select-row">
+            <label for="leaf-selector">Audit Target Leaf Record:</label>
+            <select id="leaf-selector" class="leaf-selector"></select>
+          </div>
+
+          <div class="proof-details-box">
+            <div class="proof-header">
+              <span>Proof Audit Path:</span>
+              <span id="proof-steps-count" class="meta-tag">0 steps</span>
+            </div>
+            <div id="proof-path-list" class="proof-path-list">
+              <p class="empty-hint">Build tree and select a leaf to view audit path.</p>
+            </div>
+          </div>
+
+          <div class="verify-action-row">
+            <button id="verify-proof-btn" type="button" class="verify-btn">🛡️ Verify Inclusion Proof</button>
+          </div>
+
+          <!-- Proof Verification Status Badge Card -->
+          <div id="verification-result-card" class="result-card result-verified">
+            <div class="result-icon" id="result-icon">✔</div>
+            <div class="result-content">
+              <div class="result-title" id="result-title">Proof Verified Cryptographically</div>
+              <div class="result-desc" id="result-desc">The target leaf hashes directly to the current root hash along the audit path without discrepancy.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Hierarchical Tree Depth Visualizer -->
+      <section class="visualizer-panel">
+        <div class="panel-card tree-card">
+          <div class="card-title-row">
+            <h2>Hierarchical Merkle Tree Visualizer</h2>
+            <span id="tree-depth-badge" class="depth-badge">Depth: 3 Levels</span>
+          </div>
+          <p class="section-desc">Interactive binary hash tree with SHA-256 node linkages from pet certificate leaves to root.</p>
+
+          <div id="tree-depth-visualizer" class="tree-depth-visualizer">
+            <div class="tree-loading">Constructing Merkle Tree...</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./merkle-verifier.js"></script>
+</body>
+</html>

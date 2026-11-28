@@ -9,7 +9,33 @@
   <div class="trie-container">
     <h1>HealthVitality Trie Engine</h1>
     <p>Prefix tree autocomplete & typo distance engine</p>
+
+    <!-- Search Section -->
+    <section class="search-section" aria-label="Typeahead search">
+      <div class="search-wrapper">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15.5 13l-3.2-3.2a.75.75 0 0 0-1.1 1.06h4.46l-1.82 5.36a.75.75 0 0 0 .1 1.26h3.62l-5.43-1.38a.75.75 0 0 0-.88-.78l3.62-3.62zm-3.79 1.58a.75.75 0 1 0 0-1.58.75.75 0 0 0 1.58 0zM12 6.75a5.25 5.25 0 1 0 0 10.5 5.25 5.25 0 0 0 0-10.5zm0 1a3.25 3.25 0 1 0 0 6.5 3.25 3.25 0 0 0 0-6.5z"/>
+        </svg>
+        <input type="text" id="search-input" class="search-input" placeholder="Type a health term..." autocomplete="off" aria-autocomplete="list" aria-controls="suggestions-list">
+        <datalist id="suggestions-list"></datalist>
+      </div>
+    </section>
+
+    <!-- Trie Tree Visualization -->
+    <section class="tree-viewer-section" aria-label="Trie hierarchy tree">
+      <h2 class="section-header">Trie Hierarchy Tree</h2>
+      <div class="tree-root" id="tree-root">
+        <span class="tree-node" data-node="root">root</span>
+      </div>
+    </section>
+
+    <!-- Suggestions List -->
+    <section class="suggestions-section" aria-label="Auto-suggestions">
+      <h2 class="section-header">Auto-Suggestions</h2>
+      <ul class="suggestions-list" id="suggestions-list-results" role="listbox"></ul>
+    </section>
   </div>
+
   <script type="module" src="trie-search.js"></script>
 </body>
 </html>

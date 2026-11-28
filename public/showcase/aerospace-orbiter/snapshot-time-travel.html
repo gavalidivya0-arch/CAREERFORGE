@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aerospace Orbiter - Immutable State Snapshot &amp; Time-Travel Debugger</title>
+  <link rel="stylesheet" href="./snapshot-time-travel.css">
+</head>
+<body>
+  <main class="time-travel-container" data-time-travel-lab>
+    <header class="page-header">
+      <a href="index.html" class="back-link">&larr; Back to Aerospace Orbiter</a>
+      <div class="header-badge">ORBITER-X // IMMUTABLE TIME-TRAVEL DEBUGGER</div>
+      <h1>Immutable State Snapshot &amp; Time-Travel Debugger</h1>
+      <p class="subtitle">Scrub orbital telemetry history bidirectionally, inspect property diffs, set frame/watch breakpoints, and export timeline JSON.</p>
+
+      <div class="status-summary-bar">
+        <div class="summary-chip">Snapshot Frame: <strong id="current-frame-val">0 / 0</strong></div>
+        <div class="summary-chip">Active Event: <strong id="current-label-val">Initial Telemetry Baseline</strong></div>
+        <div class="summary-chip">Playback State: <strong id="playback-status-val">Paused</strong></div>
+        <div class="summary-chip">History Depth: <strong id="history-count-val">0 Snapshots</strong></div>
+      </div>
+    </header>
+
+    <div id="breakpoint-alert" class="breakpoint-alert" hidden></div>
+
+    <!-- Timeline Scrubber & Bidirectional Playback Controls -->
+    <section class="scrubber-card">
+      <div class="scrubber-header-row">
+        <h2>Bidirectional Timeline Scrubber</h2>
+        <div class="playback-controls">
+          <button id="step-back-btn" type="button" class="control-btn" title="Step Backward (Undo)">⏮ Step Back</button>
+          <button id="play-back-btn" type="button" class="control-btn play-rev-btn" title="Play Backward Replay">◀ Play Rev</button>
+          <button id="play-btn" type="button" class="control-btn play-btn" title="Play Forward Replay">▶ Play Fwd</button>
+          <button id="step-fwd-btn" type="button" class="control-btn" title="Step Forward (Redo)">Step Fwd ⏭</button>
+          <button id="export-btn" type="button" class="control-btn export-btn" title="Export Timeline JSON">💾 Export JSON</button>
+          <button id="import-btn" type="button" class="control-btn" title="Import Timeline JSON">📂 Import JSON</button>
+          <input id="import-file-input" type="file" accept=".json,application/json" hidden>
+        </div>
+      </div>
+
+      <div class="scrubber-wrapper">
+        <div class="scrubber-track-container">
+          <div id="tick-marks" class="tick-marks" aria-hidden="true"></div>
+          <input id="timeline-slider" type="range" min="0" max="0" value="0" class="timeline-slider" aria-label="Timeline Snapshot Scrubber">
+        </div>
+        <div class="scrubber-labels">
+          <span id="start-frame-label">Frame #0</span>
+          <span id="current-frame-indicator" class="active-frame-tag">Frame #0</span>
+          <span id="end-frame-label">Frame #0</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="main-split-grid">
+      <!-- Left Column: Telemetry Mutator & Current Snapshot -->
+      <section class="state-control-col">
+        <div class="panel-card">
+          <h2>Orbiter Telemetry State Mutator</h2>
+          <form id="state-form" class="state-form">
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label for="altitude-km" class="field-label">Altitude (km):</label>
+                <input id="altitude-km" type="number" step="0.1" value="432.5" class="form-input">
+              </div>
+              <div class="form-row">
+                <label for="velocity-kps" class="field-label">Velocity (km/s):</label>
+                <input id="velocity-kps" type="number" step="0.01" value="7.74" class="form-input">
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label for="fuel-pct" class="field-label">Fuel Remaining (%):</label>
+                <input id="fuel-pct" type="number" min="0" max="100" step="0.1" value="84.5" class="form-input">
+              </div>
+              <div class="form-row">
+                <label for="rcs-thrusters" class="field-label">RCS Thrusters:</label>
+                <select id="rcs-thrusters" class="form-select">
+                  <option value="STANDBY">STANDBY</option>
+                  <option value="FIRING" selected>FIRING</option>
+                  <option value="DISABLED">DISABLED</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="mission-stage" class="field-label">Mission Phase:</label>
+              <select id="mission-stage" class="form-select">
+                <option value="LEO_CRUISE">LEO_CRUISE</option>
+                <option value="PERIGEE_BURN">PERIGEE_BURN</option>
+                <option value="APOGEE_COAST">APOGEE_COAST</option>
+                <option value="ORBIT_CORRECTION" selected>ORBIT_CORRECTION</option>
+                <option value="DOCKED_HARD_MATE">DOCKED_HARD_MATE</option>
+                <option value="DEORBIT_PREP">DEORBIT_PREP</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="commit-label" class="field-label">Snapshot Event Label:</label>
+              <input id="commit-label" type="text" value="Manual Attitude Correction" class="form-input" placeholder="e.g. Reaction Wheel Desaturation">
+            </div>
+
+            <button type="submit" class="primary-btn">📸 Commit Immutable Snapshot</button>
+          </form>
+        </div>
+
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Current State Snapshot</h2>
+            <span id="snapshot-id-tag" class="meta-tag">snapshot-0</span>
+          </div>
+          <pre id="state-viewer" class="json-viewer"></pre>
+        </div>
+      </section>
+
+      <!-- Right Column: Property Diff Inspector, Breakpoints & Timeline -->
+      <section class="diff-inspector-col">
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>State Diff Inspector</h2>
+            <span class="meta-tag">Diff vs Prior Frame</span>
+          </div>
+          <p class="diff-intro">Property-level mutations highlighted with red (removed/previous) and green (added/current) badges.</p>
+          <div id="diff-inspector" class="diff-inspector-list"></div>
+        </div>
+
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Breakpoint Inspector</h2>
+            <span class="meta-tag">Click ○ on frames or add watch</span>
+          </div>
+          <form id="watchpoint-form" class="watchpoint-form">
+            <select id="watch-key" class="form-select" aria-label="Property Key">
+              <option value="fuelRemainingPct">fuelRemainingPct</option>
+              <option value="altitudeKm">altitudeKm</option>
+              <option value="velocityKps">velocityKps</option>
+              <option value="stage">stage</option>
+              <option value="rcsThrusters">rcsThrusters</option>
+            </select>
+            <select id="watch-operator" class="form-select" aria-label="Condition Operator">
+              <option value="changed">changed</option>
+              <option value="===">===</option>
+              <option value="<">&lt;</option>
+              <option value=">">&gt;</option>
+            </select>
+            <input id="watch-value" type="text" class="form-input" placeholder="Value (if needed)">
+            <button type="submit" class="control-btn">+ Watch</button>
+          </form>
+          <div id="watchpoints-list" class="watchpoints-list"></div>
+        </div>
+
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Timeline Snapshot History</h2>
+            <span id="timeline-count-badge" class="meta-tag">0 Frames</span>
+          </div>
+          <div id="history-frames-list" class="history-frames-list"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./snapshot-time-travel.js"></script>
+</body>
+</html>

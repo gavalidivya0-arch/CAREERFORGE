@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aerospace Orbiter — Merkle Tree Integrity &amp; Proof Verifier</title>
+  <link rel="stylesheet" href="merkle-verifier.css">
+</head>
+<body>
+  <div class="merkle-shell">
+    <header class="merkle-header">
+      <div class="header-copy">
+        <a href="index.html" class="back-link">← Return to Aerospace Orbiter</a>
+        <h1>Merkle Tree Cryptographic Verifier</h1>
+        <p>Domain-separated SHA-256 telemetry integrity engine with balanced binary tree hashing, audit path generation, and sub-millisecond tamper detection.</p>
+      </div>
+      <div class="root-pill-wrap">
+        <span class="pill-label">Root Status</span>
+        <span id="rootStatusPill" class="root-status-pill" data-state="verified">INITIALIZING...</span>
+      </div>
+    </header>
+
+    <section class="metrics-strip" aria-label="Merkle tree metrics">
+      <article class="metric-card">
+        <span class="metric-label">Merkle Root Hash (SHA-256)</span>
+        <code id="rootHashOutput" class="root-hash-code">Pending tree build…</code>
+      </article>
+      <article class="metric-card metric-compact">
+        <span class="metric-label">Tree Depth</span>
+        <strong id="treeDepthStat" class="metric-value">0</strong>
+      </article>
+      <article class="metric-card metric-compact">
+        <span class="metric-label">Leaf Nodes</span>
+        <strong id="leafCountStat" class="metric-value">0</strong>
+      </article>
+      <article class="metric-card metric-compact">
+        <span class="metric-label">Engine Time</span>
+        <strong id="execTimeStat" class="metric-value">0.000 ms</strong>
+      </article>
+    </section>
+
+    <div class="workspace-grid">
+      <section class="panel dataset-panel" aria-labelledby="datasetHeading">
+        <div class="panel-head">
+          <h2 id="datasetHeading">Telemetry Dataset Input</h2>
+          <span class="panel-tag">RFC 6962 · 0x00 Leaf</span>
+        </div>
+        <label for="datasetInput" class="field-label">Orbital Telemetry Records (one leaf per line)</label>
+        <textarea id="datasetInput" class="code-textarea" rows="7" spellcheck="false"></textarea>
+        <div class="button-row">
+          <button type="button" id="buildTreeBtn" class="btn btn-primary">Build Merkle Tree</button>
+          <button type="button" id="presetOddBtn" class="btn btn-secondary">5-Leaf Odd Tree</button>
+          <button type="button" id="resetDatasetBtn" class="btn btn-secondary">Reset Default</button>
+        </div>
+      </section>
+
+      <section class="panel verification-panel" aria-labelledby="verificationHeading">
+        <div class="panel-head">
+          <h2 id="verificationHeading">Proof Verification Status</h2>
+          <span class="panel-tag">O(log N) Audit Path</span>
+        </div>
+
+        <div id="verificationCard" class="verification-card" data-state="verified" role="status" aria-live="polite">
+          <div class="verification-indicator"></div>
+          <div class="verification-copy">
+            <strong id="verificationHeadline">Awaiting Verification</strong>
+            <p id="verificationDetail">Build a Merkle tree to compute and verify an inclusion proof.</p>
+          </div>
+        </div>
+
+        <label for="leafSelector" class="field-label">Select Leaf to Audit</label>
+        <select id="leafSelector" class="select-input"></select>
+
+        <label for="candidateLeafInput" class="field-label">Candidate Leaf Payload (editable or simulate tamper)</label>
+        <textarea id="candidateLeafInput" class="code-textarea" rows="3" spellcheck="false"></textarea>
+
+        <div class="button-row">
+          <button type="button" id="verifyProofBtn" class="btn btn-primary">Verify Inclusion Proof</button>
+          <button type="button" id="tamperBtn" class="btn btn-danger">Simulate Tamper</button>
+          <button type="button" id="restoreLeafBtn" class="btn btn-secondary">Restore Leaf</button>
+        </div>
+
+        <label for="proofPathOutput" class="field-label">Cryptographic Audit Path (Sibling Hashes)</label>
+        <pre id="proofPathOutput" class="proof-output">[]</pre>
+      </section>
+    </div>
+
+    <section class="panel visualizer-panel" aria-labelledby="visualizerHeading">
+      <div class="panel-head">
+        <h2 id="visualizerHeading">Hierarchical Tree Depth Visualizer</h2>
+        <div class="legend" aria-label="Node state legend">
+          <span class="legend-item"><i class="dot dot-active"></i>Audit Target</span>
+          <span class="legend-item"><i class="dot dot-sibling"></i>Proof Sibling</span>
+          <span class="legend-item"><i class="dot dot-tampered"></i>Tampered</span>
+        </div>
+      </div>
+      <p class="visualizer-hint">Click any leaf node at the bottom layer to inspect its inclusion proof path to the root.</p>
+      <div id="treeVisualizer" class="tree-visualizer"></div>
+    </section>
+  </div>
+
+  <script type="module" src="merkle-verifier.js"></script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QUANTUM FORGE // Binary Heap Priority Queue &amp; Backpressure Dispatcher</title>
+  <link rel="stylesheet" href="priority-queue.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="pq-nav">
+    <div class="pq-brand">
+      <span>⚡</span>
+      <span>QUANTUM FORGE</span>
+    </div>
+    <span class="pq-module-badge">PRIORITY HEAP DISPATCHER</span>
+  </header>
+
+  <main class="pq-container">
+    <section class="pq-hero">
+      <h1>Binary Heap Priority Event Queue &amp; Backpressure Dispatcher</h1>
+      <p>
+        In-memory binary heap scheduler with strict FIFO tie-breaking, token-bucket rate pacing,
+        and live queue saturation telemetry.
+      </p>
+    </section>
+
+    <div id="backpressure-alert" class="bp-alert" role="status" aria-live="polite" hidden></div>
+
+    <section class="pq-metrics-grid">
+      <article class="pq-card gauge-card">
+        <div class="gauge-header">
+          <div>
+            <h2>Live Queue Depth Gauge</h2>
+            <span id="queue-depth-label" class="mono-sub">0 / 24 (0%)</span>
+          </div>
+          <span id="backpressure-badge" class="bp-status bp-nominal">NOMINAL</span>
+        </div>
+        <div class="progress-track" aria-label="Queue depth utilization">
+          <div id="queue-depth-bar" class="progress-fill depth-fill" data-level="nominal" style="width: 0%"></div>
+        </div>
+        <div class="token-row">
+          <span class="mono-sub">Token Bucket</span>
+          <span id="token-label" class="mono-sub">2 / 2 tokens</span>
+        </div>
+        <div class="progress-track token-track" aria-label="Token bucket capacity">
+          <div id="token-bucket-bar" class="progress-fill token-fill" style="width: 100%"></div>
+        </div>
+      </article>
+
+      <article class="pq-card stats-card">
+        <h2>Throughput &amp; Backpressure</h2>
+        <div class="stat-cells">
+          <div class="stat-cell">
+            <span class="stat-val" id="metric-enqueued">0</span>
+            <span class="stat-lbl">Enqueued</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-val" id="metric-dispatched">0</span>
+            <span class="stat-lbl">Dispatched</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-val warn" id="metric-dropped">0</span>
+            <span class="stat-lbl">Dropped</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-val" id="metric-wait">0 ms</span>
+            <span class="stat-lbl">Avg Wait</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="pq-controls-grid">
+      <form id="enqueue-form" class="pq-card form-card">
+        <h2>Enqueue Quantum Event</h2>
+        <div class="form-row">
+          <div class="field-group grow">
+            <label for="event-payload">Event Payload</label>
+            <input
+              id="event-payload"
+              type="text"
+              placeholder="e.g. Qubit-08 syndrome decode task"
+              autocomplete="off"
+              required
+            />
+          </div>
+          <div class="field-group">
+            <label for="event-priority">Priority Rank</label>
+            <select id="event-priority">
+              <option value="urgent">Urgent (4)</option>
+              <option value="high">High (3)</option>
+              <option value="normal" selected>Normal (2)</option>
+              <option value="low">Low (1)</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary">Enqueue Task</button>
+          <button type="button" id="burst-btn" class="btn btn-secondary">Simulate Burst (+6)</button>
+          <button type="button" id="clear-queue-btn" class="btn btn-ghost">Clear Heap</button>
+        </div>
+      </form>
+
+      <div class="pq-card dispatcher-card">
+        <h2>Token-Bucket Rate Control</h2>
+        <div class="slider-header">
+          <label for="rate-slider">Dispatch Interval (Rate Limit)</label>
+          <span id="rate-value" class="rate-pill">450 ms</span>
+        </div>
+        <input
+          id="rate-slider"
+          type="range"
+          min="50"
+          max="2000"
+          step="50"
+          value="450"
+        />
+        <div class="slider-scale">
+          <span>50 ms (Fast)</span>
+          <span>1000 ms</span>
+          <span>2000 ms (Throttled)</span>
+        </div>
+        <div class="btn-row">
+          <button type="button" id="toggle-dispatcher-btn" class="btn btn-accent" data-running="true">
+            Pause Dispatcher
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="pq-streams-grid">
+      <div class="pq-card stream-panel">
+        <div class="stream-header">
+          <h2>Active Heap Queue (Next Out First)</h2>
+        </div>
+        <ul id="heap-preview-list" class="stream-list"></ul>
+      </div>
+
+      <div class="pq-card stream-panel">
+        <div class="stream-header">
+          <h2>Processed Event Feed</h2>
+        </div>
+        <ul id="processed-feed-list" class="stream-list"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="priority-queue.js"></script>
+</body>
+</html>

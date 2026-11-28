@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SOLIS-GRID // Renewable Microgrid — Kanban Task Board</title>
+  <link rel="stylesheet" href="./kanban-board.css" />
+</head>
+<body>
+  <div class="kanban-shell" data-kanban-lab>
+    <header class="kanban-topbar">
+      <div class="brand-group">
+        <a class="back-link" href="./index.html">← SOLIS-GRID</a>
+        <span class="scope-pill">MICROGRID OPS // KANBAN</span>
+      </div>
+      <div class="topbar-stats" id="board-summary" aria-live="polite">0 tasks</div>
+    </header>
+
+    <section class="kanban-hero">
+      <div class="hero-copy">
+        <h1>Microgrid Dispatch &amp; Task Kanban Board</h1>
+        <p>
+          Drag task cards across workflow stages, reorder column lanes by dragging column headers
+          or using the arrow controls, and persist board state automatically in localStorage.
+        </p>
+      </div>
+      <div class="hero-actions">
+        <button type="button" id="open-task-modal-btn" class="btn-primary">+ New Task</button>
+        <button type="button" id="reset-board-btn" class="btn-secondary">Reset Demo</button>
+        <button type="button" id="clear-board-btn" class="btn-ghost">Clear Board</button>
+      </div>
+    </section>
+
+    <main id="kanban-grid" class="kanban-grid" aria-label="Microgrid task kanban columns">
+      <section class="kanban-column" data-column="backlog">
+        <div class="column-header col-backlog" draggable="true" data-column-handle="backlog">
+          <div class="col-title-wrap">
+            <span class="drag-grip" aria-hidden="true">⋮⋮</span>
+            <h2>Backlog</h2>
+            <span id="count-backlog" class="col-count">0</span>
+          </div>
+          <div class="col-reorder-actions">
+            <button type="button" class="col-move-btn" data-col-move="prev" aria-label="Move Backlog column left">◀</button>
+            <button type="button" class="col-move-btn" data-col-move="next" aria-label="Move Backlog column right">▶</button>
+          </div>
+        </div>
+        <div class="kanban-column-body" data-col="backlog" role="list" aria-label="Backlog tasks"></div>
+      </section>
+
+      <section class="kanban-column" data-column="in-progress">
+        <div class="column-header col-in-progress" draggable="true" data-column-handle="in-progress">
+          <div class="col-title-wrap">
+            <span class="drag-grip" aria-hidden="true">⋮⋮</span>
+            <h2>In Progress</h2>
+            <span id="count-in-progress" class="col-count">0</span>
+          </div>
+          <div class="col-reorder-actions">
+            <button type="button" class="col-move-btn" data-col-move="prev" aria-label="Move In Progress column left">◀</button>
+            <button type="button" class="col-move-btn" data-col-move="next" aria-label="Move In Progress column right">▶</button>
+          </div>
+        </div>
+        <div class="kanban-column-body" data-col="in-progress" role="list" aria-label="In Progress tasks"></div>
+      </section>
+
+      <section class="kanban-column" data-column="review">
+        <div class="column-header col-review" draggable="true" data-column-handle="review">
+          <div class="col-title-wrap">
+            <span class="drag-grip" aria-hidden="true">⋮⋮</span>
+            <h2>Review</h2>
+            <span id="count-review" class="col-count">0</span>
+          </div>
+          <div class="col-reorder-actions">
+            <button type="button" class="col-move-btn" data-col-move="prev" aria-label="Move Review column left">◀</button>
+            <button type="button" class="col-move-btn" data-col-move="next" aria-label="Move Review column right">▶</button>
+          </div>
+        </div>
+        <div class="kanban-column-body" data-col="review" role="list" aria-label="Review tasks"></div>
+      </section>
+
+      <section class="kanban-column" data-column="done">
+        <div class="column-header col-done" draggable="true" data-column-handle="done">
+          <div class="col-title-wrap">
+            <span class="drag-grip" aria-hidden="true">⋮⋮</span>
+            <h2>Done</h2>
+            <span id="count-done" class="col-count">0</span>
+          </div>
+          <div class="col-reorder-actions">
+            <button type="button" class="col-move-btn" data-col-move="prev" aria-label="Move Done column left">◀</button>
+            <button type="button" class="col-move-btn" data-col-move="next" aria-label="Move Done column right">▶</button>
+          </div>
+        </div>
+        <div class="kanban-column-body" data-col="done" role="list" aria-label="Done tasks"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="task-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="task-modal-title" hidden>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="task-modal-title">Create Microgrid Task</h3>
+        <button type="button" id="close-modal-btn" class="modal-close" aria-label="Close modal">&times;</button>
+      </div>
+      <form id="add-task-form" novalidate>
+        <div class="form-field">
+          <label for="new-task-title">Task Title</label>
+          <input
+            type="text"
+            id="new-task-title"
+            placeholder="e.g. Inspect Substation BESS Thermal Loop"
+            maxlength="120"
+            required
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="new-task-priority">Priority Tag</label>
+            <select id="new-task-priority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="new-task-column">Workflow Stage</label>
+            <select id="new-task-column">
+              <option value="backlog" selected>Backlog</option>
+              <option value="in-progress">In Progress</option>
+              <option value="review">Review</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+
+        <p id="task-form-error" class="form-error" role="alert" hidden></p>
+
+        <div class="modal-actions">
+          <button type="button" id="cancel-modal-btn" class="btn-secondary">Cancel</button>
+          <button type="submit" id="submit-task-btn" class="btn-primary">Create Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="./kanban-board.js"></script>
+</body>
+</html>

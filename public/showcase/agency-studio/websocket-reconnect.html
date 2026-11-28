@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AgencyStudio - Resilient WebSocket</title>
   <link rel="stylesheet" href="websocket-reconnect.css">
 </head>
@@ -9,7 +10,37 @@
   <div class="ws-container">
     <h1>AgencyStudio Resilient WebSocket Stream</h1>
     <p>Heartbeat management & exponential backoff recovery</p>
+
+    <!-- Connection Controls -->
+    <div class="ws-controls">
+      <button id="connectBtn" class="btn-primary">Connect</button>
+      <button id="disconnectBtn" class="btn-secondary">Disconnect</button>
+      <button id="simulateDropBtn" class="btn-danger">Simulate Drop</button>
+    </div>
+
+    <!-- Connection State Pill -->
+    <div class="state-pill" id="statePill">DISCONNECTED</div>
+
+    <!-- Backoff Countdown -->
+    <div class="backoff-timer" id="backoffTimer" style="display:none;">
+      Reconnecting in <span id="backoffCountdown">--</span>ms
+    </div>
+
+    <!-- Message Queue Status -->
+    <div class="queue-status">
+      <div class="queue-label">Message Queue: <span id="queueSize">0</span> messages</div>
+      <div class="queue-details" id="queueDetails">Pending offline messages will be flushed on reconnect</div>
+    </div>
+
+    <!-- Connection Timeline -->
+    <div class="timeline-section" id="timelineSection" style="display:none;">
+      <h3>Connection Timeline</h3>
+      <div class="timeline-log" id="timelineLog">
+        <div class="timeline-entry">Ready to connect...</div>
+      </div>
+    </div>
   </div>
+
   <script type="module" src="websocket-reconnect.js"></script>
 </body>
 </html>

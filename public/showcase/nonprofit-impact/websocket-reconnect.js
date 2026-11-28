@@ -5,14 +5,18 @@ export class NonprofitImpactResilientSocket {
     this.maxBackoffMs = options.maxBackoffMs ?? 30000;
     this.maxAttempts = options.maxAttempts ?? 5;
     this.jitter = options.jitter ?? false;
+    this.heartbeatInterval = options.heartbeatInterval ?? 5000;
+    this.heartbeatTimeout = options.heartbeatTimeout ?? 10000;
 
     this.status = 'DISCONNECTED'; // DISCONNECTED | CONNECTING | CONNECTED | RECONNECTING | FAILED
     this.reconnectAttempts = 0;
     this.queue = [];
     this.sentMessages = [];
     this.reconnectTimer = null;
+    this.heartbeatTimer = null;
     this.onStateChange = null;
     this.onMessage = null;
+    this._pongReceived = false;
   }
 
   calculateBackoff(attempt) {
@@ -38,6 +42,40 @@ export class NonprofitImpactResilientSocket {
     }
   }
 
+  #startHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearTimeout(this.heartbeatTimer);
+    }
+    this._pongReceived = false;
+    this.#sendPing();
+  }
+
+  #sendPing() {
+    if (this.status !== 'CONNECTED') return;
+    this._pongReceived = false;
+    this.#scheduleNextPing();
+    // In a real WS, would send: this.ws.send(JSON.stringify({ type: 'ping' }));
+    // For this lab: trigger pong simulation after heartbeatTimeout
+    this.heartbeatTimer = setTimeout(() => this.#onHeartbeatTimeout(), this.heartbeatTimeout);
+  }
+
+  #scheduleNextPing() {
+    this.heartbeatTimer = setTimeout(() => {
+      if (this.status === 'CONNECTED' && !this._pongReceived) {
+        this.#setStatus('RECONNECTING');
+        this.simulateDrop();
+      } else if (this.status === 'CONNECTED' && this._pongReceived) {
+        this.#startHeartbeat();
+      }
+    }, this.heartbeatInterval);
+  }
+
+  #onHeartbeatTimeout() {
+    this._pongReceived = false;
+    this.#setStatus('RECONNECTING');
+    this.simulateDrop();
+  }
+
   connect() {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
@@ -57,7 +95,7 @@ export class NonprofitImpactResilientSocket {
   }
 
   simulateDrop() {
-    if (this.status !== 'CONNECTED' && this.status !== 'CONNECTING') return;
+    if (this.status === 'DISCONNECTED' || this.status === 'FAILED') return;
 
     if (this.reconnectAttempts >= this.maxAttempts) {
       this.#setStatus('FAILED');
@@ -74,13 +112,17 @@ export class NonprofitImpactResilientSocket {
       } else {
         this.#setStatus('FAILED');
       }
-    }, Math.min(delay, 200));
+    }, delay);
   }
 
   disconnect() {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
+    }
+    if (this.heartbeatTimer) {
+      clearTimeout(this.heartbeatTimer);
+      this.heartbeatTimer = null;
     }
     this.reconnectAttempts = 0;
     this.#setStatus('DISCONNECTED');

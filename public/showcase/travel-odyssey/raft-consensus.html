@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Travel Odyssey — Distributed Raft Consensus Engine</title>
+  <link rel="stylesheet" href="raft-consensus.css" />
+</head>
+<body class="raft-body">
+  <main class="raft-shell">
+    <header class="raft-header">
+      <div>
+        <div class="brand-eyebrow">ODYSSEY DISTRIBUTED ENGINE</div>
+        <h1>Raft Consensus &amp; Leader Election Simulator</h1>
+        <p class="header-subtitle">
+          Interactive multi-node state machine modeling randomized election timeouts, RequestVote RPCs, network partitions, and log commit replication.
+        </p>
+      </div>
+
+      <div class="telemetry-pills">
+        <div class="telemetry-pill">
+          <span class="pill-label">Current Term</span>
+          <span class="pill-value gold" id="termCounter">0</span>
+        </div>
+        <div class="telemetry-pill">
+          <span class="pill-label">Active Leader</span>
+          <span class="pill-value cyan" id="leaderDisplay">None</span>
+        </div>
+        <div class="telemetry-pill">
+          <span class="pill-label">Quorum</span>
+          <span class="pill-value" id="quorumDisplay">3 / 5</span>
+        </div>
+        <div class="telemetry-pill">
+          <span class="pill-label">Commit Index</span>
+          <span class="pill-value" id="commitIndexDisplay">0</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="control-bar" aria-label="Cluster simulation controls">
+      <div class="control-group">
+        <div class="cluster-size-switch" role="group" aria-label="Cluster size">
+          <button type="button" class="size-btn" data-size="3" id="size3Btn">3 Nodes</button>
+          <button type="button" class="size-btn active" data-size="5" id="size5Btn">5 Nodes</button>
+        </div>
+        <button type="button" class="btn btn-primary" id="toggleAutoBtn">⏸ Pause Clock</button>
+        <button type="button" class="btn" id="stepTickBtn">Step +50ms</button>
+        <button type="button" class="btn btn-gold" id="sendHeartbeatBtn">Send Heartbeat</button>
+      </div>
+
+      <div class="control-group">
+        <button type="button" class="btn btn-purple" id="splitVoteBtn">Simulate Split Vote</button>
+        <button type="button" class="btn btn-danger" id="killLeaderBtn">Kill Node (Leader)</button>
+        <button type="button" class="btn btn-danger" id="partitionToggleBtn">Partition Network</button>
+        <button type="button" class="btn" id="resetClusterBtn">Reset</button>
+      </div>
+    </section>
+
+    <div class="partition-banner" id="partitionBanner" role="status"></div>
+
+    <div class="workspace-grid">
+      <section class="panel" aria-label="Cluster topology diagram">
+        <div class="panel-header">
+          <h2>Cluster Topology &amp; RPC Packets</h2>
+          <div class="legend">
+            <span class="legend-item"><span class="dot leader"></span>Leader</span>
+            <span class="legend-item"><span class="dot follower"></span>Follower</span>
+            <span class="legend-item"><span class="dot candidate"></span>Candidate</span>
+            <span class="legend-item"><span class="dot dead"></span>Offline</span>
+          </div>
+        </div>
+
+        <div class="cluster-stage" id="clusterStage">
+          <svg class="cluster-links-svg" id="clusterLinksSvg" aria-hidden="true"></svg>
+          <div class="packet-layer" id="packetLayer" aria-hidden="true"></div>
+          <div id="nodesLayer"></div>
+        </div>
+      </section>
+
+      <div class="right-column">
+        <section class="panel" aria-label="Log replication viewer">
+          <div class="panel-header">
+            <h2>Log Replication Viewer</h2>
+            <span class="pill-label" id="logStatusLabel">Awaiting Leader</span>
+          </div>
+
+          <form class="replicate-form" id="replicateForm">
+            <input
+              type="text"
+              class="replicate-input"
+              id="commandInput"
+              placeholder="Enter expedition command (e.g. BOOK_FLIGHT_TYO)"
+              value="BOOK_FLIGHT_TYO"
+              aria-label="Command to replicate"
+            />
+            <button type="submit" class="btn btn-primary">Replicate Log</button>
+          </form>
+
+          <div class="quick-commands">
+            <button type="button" class="btn btn-sm quick-cmd" data-cmd="RESERVE_RYOKAN_KYOTO">RESERVE_RYOKAN_KYOTO</button>
+            <button type="button" class="btn btn-sm quick-cmd" data-cmd="DISPATCH_ICELAND_GEAR">DISPATCH_ICELAND_GEAR</button>
+            <button type="button" class="btn btn-sm quick-cmd" data-cmd="LOCK_PATAGONIA_PERMIT">LOCK_PATAGONIA_PERMIT</button>
+          </div>
+
+          <div class="log-matrix" id="logMatrix"></div>
+        </section>
+
+        <section class="panel" aria-label="RPC event log">
+          <div class="panel-header">
+            <h2>RPC &amp; Consensus Event Stream</h2>
+            <button type="button" class="btn btn-sm" id="clearEventsBtn">Clear Feed</button>
+          </div>
+          <div class="rpc-feed" id="rpcFeed"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { TravelOdysseyRaftCluster, NODE_STATES } from './raft-consensus.js';
+
+    const clusterStage = document.getElementById('clusterStage');
+    const clusterLinksSvg = document.getElementById('clusterLinksSvg');
+    const packetLayer = document.getElementById('packetLayer');
+    const nodesLayer = document.getElementById('nodesLayer');
+    const logMatrix = document.getElementById('logMatrix');
+    const rpcFeed = document.getElementById('rpcFeed');
+    const termCounter = document.getElementById('termCounter');
+    const leaderDisplay = document.getElementById('leaderDisplay');
+    const quorumDisplay = document.getElementById('quorumDisplay');
+    const commitIndexDisplay = document.getElementById('commitIndexDisplay');
+    const logStatusLabel = document.getElementById('logStatusLabel');
+    const partitionBanner = document.getElementById('partitionBanner');
+    const partitionToggleBtn = document.getElementById('partitionToggleBtn');
+    const killLeaderBtn = document.getElementById('killLeaderBtn');
+    const toggleAutoBtn = document.getElementById('toggleAutoBtn');
+    const commandInput = document.getElementById('commandInput');
+
+    let currentSize = 5;
+    let autoRunning = true;
+    let nodePositions = {};
+    let cluster = createCluster(currentSize);
+
+    function computePositions(nodes) {
+      const width = clusterStage.clientWidth || 640;
+      const height = clusterStage.clientHeight || 500;
+      const cx = width / 2;
+      const cy = height / 2;
+      const rx = Math.max(120, Math.min(width * 0.34, 220));
+      const ry = Math.max(120, Math.min(height * 0.34, 175));
+
+      const map = {};
+      nodes.forEach((node, idx) => {
+        const angle = -Math.PI / 2 + (2 * Math.PI * idx) / nodes.length;
+        map[node.id] = {
+          x: cx + rx * Math.cos(angle),
+          y: cy + ry * Math.sin(angle)
+        };
+      });
+      return map;
+    }
+
+    function spawnPacket(event) {
+      const fromPos = nodePositions[event.from];
+      const toPos = nodePositions[event.to];
+      if (!fromPos || !toPos) return;
+
+      const labelMap = {
+        REQUEST_VOTE: `VoteReq T${event.term}`,
+        VOTE_RESPONSE: event.granted ? 'Vote ✓' : 'Vote ✕',
+        HEARTBEAT: `HB T${event.term}`,
+        APPEND_ENTRIES: `Append T${event.term}`,
+        APPEND_RESPONSE: event.success ? 'Ack ✓' : 'Ack ✕'
+      };
+      const label = labelMap[event.type];
+      if (!label) return;
+
+      if (packetLayer.childElementCount > 28) {
+        packetLayer.firstElementChild?.remove();
+      }
+
+      const packet = document.createElement('div');
+      packet.className = `rpc-packet packet-${event.type}${event.delivered ? '' : ' packet-dropped'}`;
+      packet.style.setProperty('--from-x', `${fromPos.x}px`);
+      packet.style.setProperty('--from-y', `${fromPos.y}px`);
+      packet.style.setProperty('--to-x', `${toPos.x}px`);
+      packet.style.setProperty('--to-y', `${toPos.y}px`);
+      packet.textContent = event.delivered ? label : `${label} (drop)`;
+      packetLayer.appendChild(packet);
+
+      packet.addEventListener('animationend', () => packet.remove(), { once: true });
+    }
+
+    function createCluster(nodeCount) {
+      return new TravelOdysseyRaftCluster({
+        nodeCount,
+        electionTimeoutMin: 600,
+        electionTimeoutMax: 1200,
+        heartbeatInterval: 220,
+        onMessage: (event) => {
+          spawnPacket(event);
+        },
+        onStateChange: () => {
+          render();
+        }
+      });
+    }
+
+    function renderLinks(snapshot) {
+      clusterLinksSvg.innerHTML = '';
+      const nodes = snapshot.nodes;
+      for (let i = 0; i < nodes.length; i += 1) {
+        for (let j = i + 1; j < nodes.length; j += 1) {
+          const a = nodes[i];
+          const b = nodes[j];
+          const pA = nodePositions[a.id];
+          const pB = nodePositions[b.id];
+          if (!pA || !pB) continue;
+
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', String(pA.x));
+          line.setAttribute('y1', String(pA.y));
+          line.setAttribute('x2', String(pB.x));
+          line.setAttribute('y2', String(pB.y));
+          const linked = cluster.canCommunicate(a.id, b.id);
+          line.setAttribute('class', linked ? 'network-link' : 'network-link severed');
+          clusterLinksSvg.appendChild(line);
+        }
+      }
+    }
+
+    function renderNodes(snapshot) {
+      nodesLayer.innerHTML = '';
+      const minoritySet = new Set(snapshot.partitions ? snapshot.partitions[0] : []);
+
+      for (const node of snapshot.nodes) {
+        const pos = nodePositions[node.id];
+        const card = document.createElement('article');
+        card.className = 'node-card' + (minoritySet.has(node.id) ? ' partitioned' : '');
+        card.dataset.state = node.state;
+        card.style.left = `${pos.x}px`;
+        card.style.top = `${pos.y}px`;
+
+        const pct = node.alive && node.state !== NODE_STATES.LEADER
+          ? Math.min(100, Math.round((node.elapsedSinceHeartbeat / node.electionTimeout) * 100))
+          : (node.state === NODE_STATES.LEADER ? 100 : 0);
+
+        card.innerHTML = `
+          <div class="node-top">
+            <span class="node-name">${node.label}</span>
+            <span class="state-badge ${node.state}">${node.state}</span>
+          </div>
+          <div class="node-meta">
+            <span>Term: <strong>${node.currentTerm}</strong></span>
+            <span>Commit: <strong>${node.commitIndex}</strong></span>
+            <span>Vote: <strong>${node.votedFor || '—'}</strong></span>
+            <span>Log: <strong>${node.log.length}</strong></span>
+          </div>
+          <div class="timeout-bar" title="Election timeout progress">
+            <div class="timeout-fill" style="width: ${pct}%"></div>
+          </div>
+          <div class="node-actions">
+            <button type="button" class="btn btn-sm btn-purple elect-btn" ${!node.alive ? 'disabled' : ''}>Elect</button>
+            <button type="button" class="btn btn-sm ${node.alive ? 'btn-danger' : 'btn-primary'} toggle-alive-btn">
+              ${node.alive ? 'Kill' : 'Revive'}
+            </button>
+          </div>
+        `;
+
+        card.querySelector('.elect-btn').addEventListener('click', () => {
+          cluster.startElection(node.id);
+        });
+        card.querySelector('.toggle-alive-btn').addEventListener('click', () => {
+          if (node.alive) {
+            cluster.handleNodeFailure(node.id);
+          } else {
+            cluster.recoverNode(node.id);
+          }
+        });
+
+        nodesLayer.appendChild(card);
+      }
+    }
+
+    function renderLogs(snapshot) {
+      logMatrix.innerHTML = '';
+      for (const node of snapshot.nodes) {
+        const row = document.createElement('div');
+        row.className = 'node-log-row';
+
+        const label = document.createElement('span');
+        label.className = 'node-log-label';
+        label.textContent = `${node.label}${node.state === NODE_STATES.LEADER ? ' ★' : ''}`;
+        row.appendChild(label);
+
+        const strip = document.createElement('div');
+        strip.className = 'log-entries-strip';
+
+        if (node.log.length === 0) {
+          const empty = document.createElement('span');
+          empty.className = 'empty-log';
+          empty.textContent = 'No log entries';
+          strip.appendChild(empty);
+        } else {
+          for (const entry of node.log) {
+            const chip = document.createElement('span');
+            chip.className = 'log-chip' + (entry.committed ? ' committed' : '');
+            chip.textContent = `#${entry.index} [T${entry.term}] ${entry.command}`;
+            strip.appendChild(chip);
+          }
+        }
+
+        row.appendChild(strip);
+        logMatrix.appendChild(row);
+      }
+    }
+
+    function renderRpcFeed(snapshot) {
+      rpcFeed.innerHTML = '';
+      const recent = snapshot.messageLog.slice(-18).reverse();
+      for (const ev of recent) {
+        const item = document.createElement('div');
+        item.className = `rpc-item type-${ev.type}${ev.delivered ? '' : ' dropped'}`;
+        item.innerHTML = `
+          <span><strong>${ev.type}</strong> ${ev.from} → ${ev.to}</span>
+          <span>${ev.detail || ''}</span>
+        `;
+        rpcFeed.appendChild(item);
+      }
+    }
+
+    function render() {
+      const snapshot = cluster.getSnapshot();
+      nodePositions = computePositions(snapshot.nodes);
+
+      termCounter.textContent = String(snapshot.currentTerm);
+      leaderDisplay.textContent = snapshot.leaderId || 'No Leader';
+      const aliveCount = snapshot.nodes.filter((n) => n.alive).length;
+      quorumDisplay.textContent = `${snapshot.quorumSize} / ${snapshot.nodeCount} (${aliveCount} up)`;
+
+      const leader = snapshot.nodes.find((n) => n.id === snapshot.leaderId);
+      commitIndexDisplay.textContent = String(leader ? leader.commitIndex : 0);
+      logStatusLabel.textContent = leader
+        ? `Leader ${leader.label} (Term ${leader.currentTerm})`
+        : 'Election Pending (No Leader)';
+
+      killLeaderBtn.disabled = !leader;
+      partitionToggleBtn.textContent = snapshot.partitioned ? 'Heal Partition' : 'Partition Network';
+      partitionToggleBtn.classList.toggle('btn-active', snapshot.partitioned);
+
+      if (snapshot.partitioned && snapshot.partitions) {
+        partitionBanner.textContent = `Network Partition Active — Groups: ${snapshot.partitions
+          .map((g) => `[${g.join(', ')}]`)
+          .join(' ✕ ')}`;
+        partitionBanner.classList.add('visible');
+      } else {
+        partitionBanner.classList.remove('visible');
+      }
+
+      renderLinks(snapshot);
+      renderNodes(snapshot);
+      renderLogs(snapshot);
+      renderRpcFeed(snapshot);
+    }
+
+    // Event bindings
+    document.getElementById('size3Btn').addEventListener('click', () => {
+      currentSize = 3;
+      document.getElementById('size3Btn').classList.add('active');
+      document.getElementById('size5Btn').classList.remove('active');
+      cluster = createCluster(3);
+      render();
+    });
+
+    document.getElementById('size5Btn').addEventListener('click', () => {
+      currentSize = 5;
+      document.getElementById('size5Btn').classList.add('active');
+      document.getElementById('size3Btn').classList.remove('active');
+      cluster = createCluster(5);
+      render();
+    });
+
+    toggleAutoBtn.addEventListener('click', () => {
+      autoRunning = !autoRunning;
+      toggleAutoBtn.textContent = autoRunning ? '⏸ Pause Clock' : '▶ Resume Clock';
+    });
+
+    document.getElementById('stepTickBtn').addEventListener('click', () => {
+      cluster.tick(50);
+    });
+
+    document.getElementById('sendHeartbeatBtn').addEventListener('click', () => {
+      cluster.sendHeartbeats();
+    });
+
+    document.getElementById('splitVoteBtn').addEventListener('click', () => {
+      const alive = cluster.getNodes().filter((n) => n.alive);
+      if (alive.length >= 2) {
+        const contenders = alive.slice(0, Math.min(3, alive.length)).map((n) => n.id);
+        cluster.startConcurrentElections(contenders);
+      }
+    });
+
+    killLeaderBtn.addEventListener('click', () => {
+      const leader = cluster.getLeader();
+      if (leader) {
+        cluster.handleNodeFailure(leader.id);
+      }
+    });
+
+    partitionToggleBtn.addEventListener('click', () => {
+      cluster.togglePartition();
+    });
+
+    document.getElementById('resetClusterBtn').addEventListener('click', () => {
+      cluster.reset();
+    });
+
+    document.getElementById('clearEventsBtn').addEventListener('click', () => {
+      cluster.messageLog = [];
+      render();
+    });
+
+    document.getElementById('replicateForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const cmd = commandInput.value.trim();
+      if (!cmd) return;
+      cluster.replicateLog(cmd);
+    });
+
+    document.querySelectorAll('.quick-cmd').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const cmd = btn.dataset.cmd;
+        commandInput.value = cmd;
+        cluster.replicateLog(cmd);
+      });
+    });
+
+    window.addEventListener('resize', () => render());
+
+    setInterval(() => {
+      if (autoRunning) {
+        cluster.tick(60);
+      }
+    }, 120);
+
+    // Bootstrap initial cluster state cleanly
+    cluster.startElection('node-1');
+    render();
+  </script>
+</body>
+</html>

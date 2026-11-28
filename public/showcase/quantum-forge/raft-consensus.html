@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Forge - Distributed Raft Consensus & Leader Election</title>
+  <link rel="stylesheet" href="raft-consensus.css">
+</head>
+<body>
+  <div class="raft-shell">
+    <header class="raft-header">
+      <div class="header-title-group">
+        <h1>Quantum Forge — Raft Consensus Cluster</h1>
+        <p>Interactive multi-node state machine modeling Leader, Follower, and Candidate elections, heartbeats, partitions, and log replication.</p>
+      </div>
+      <div class="header-actions">
+        <label class="size-picker" for="cluster-size-select">
+          <span>Cluster Size</span>
+          <select id="cluster-size-select" aria-label="Cluster size">
+            <option value="3">3 Nodes (Quorum 2)</option>
+            <option value="5" selected>5 Nodes (Quorum 3)</option>
+          </select>
+        </label>
+        <button id="reset-cluster-btn" class="btn secondary-btn" type="button">Reset Cluster</button>
+      </div>
+    </header>
+
+    <section class="telemetry-bar" aria-label="Cluster metrics">
+      <div class="stat-card">
+        <span class="stat-label">Current Term</span>
+        <span id="term-counter" class="stat-value">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Active Leader</span>
+        <span id="leader-badge" class="stat-value">None</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Majority Quorum</span>
+        <span id="quorum-badge" class="stat-value">3 / 5</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Network Status</span>
+        <span id="partition-status" class="stat-value status-ok">Healthy Mesh</span>
+      </div>
+    </section>
+
+    <section class="control-deck" aria-label="Cluster simulation controls">
+      <div class="control-buttons">
+        <button id="toggle-sim-btn" class="btn primary-btn" type="button">Start Auto Simulation</button>
+        <button id="step-tick-btn" class="btn secondary-btn" type="button">Step Tick (+60ms)</button>
+        <button id="send-heartbeat-btn" class="btn secondary-btn" type="button">Send Heartbeats</button>
+        <button id="split-vote-btn" class="btn secondary-btn" type="button">Simulate Split Vote</button>
+        <button id="partition-toggle-btn" class="btn danger-outline-btn" type="button">Partition Network</button>
+      </div>
+      <div class="command-bar">
+        <input
+          id="command-input"
+          type="text"
+          placeholder="Enter state machine command (e.g. SET q0=H)"
+          aria-label="Log command"
+        >
+        <button id="replicate-cmd-btn" class="btn gold-btn" type="button">Replicate Log Entry</button>
+      </div>
+    </section>
+
+    <main class="raft-workspace">
+      <section class="cluster-stage" aria-label="Cluster node diagram">
+        <div class="panel-heading">
+          <h2>Cluster Topology & RPC Packet Flow</h2>
+          <div class="legend">
+            <span class="legend-item leader">Leader</span>
+            <span class="legend-item follower">Follower</span>
+            <span class="legend-item candidate">Candidate</span>
+          </div>
+        </div>
+        <div class="diagram-wrapper">
+          <div id="packet-layer" class="packet-layer" aria-hidden="true"></div>
+          <div id="cluster-nodes" class="cluster-nodes" data-count="5"></div>
+        </div>
+      </section>
+
+      <aside class="inspector-column">
+        <section class="panel-card" aria-label="Log replication viewer">
+          <div class="panel-heading">
+            <h2>Log Replication Viewer</h2>
+            <span class="panel-sub">Committed vs. Uncommitted</span>
+          </div>
+          <div id="log-replication-viewer" class="log-viewer"></div>
+        </section>
+
+        <section class="panel-card" aria-label="RPC message stream">
+          <div class="panel-heading">
+            <h2>RPC Exchange Stream</h2>
+            <span class="panel-sub">RequestVote & AppendEntries</span>
+          </div>
+          <div id="rpc-event-log" class="rpc-log"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script type="module" src="raft-consensus.js"></script>
+</body>
+</html>

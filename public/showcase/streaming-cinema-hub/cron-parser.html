@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Build, translate, and visualize 5-part cron schedule expressions for Streaming Cinema Hub transcode, watch-party, and CDN automation jobs." />
+  <title>CINE-STREAM // Cron Schedule Builder &amp; Next-Run Visualizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./cron-parser.css" />
+</head>
+<body class="cinema-cron-body">
+  <header class="glass-nav">
+    <div class="nav-left">
+      <a class="back-link" href="./index.html">&larr; CINE-STREAM</a>
+      <span class="nav-divider" aria-hidden="true">/</span>
+      <span class="nav-title">Cron Schedule Builder</span>
+    </div>
+    <div class="badge">BROADCAST AUTOMATION // 5-PART CRON</div>
+  </header>
+
+  <main class="cron-shell" data-cron-lab>
+    <section class="hero">
+      <span class="eyebrow">Streaming Cinema Hub · Job &amp; Pipeline Scheduler</span>
+      <h1>Cron Schedule Expression Builder</h1>
+      <p class="subtitle">
+        Compose 5-part cron syntax for 4K ProRes transcodes, watch-party lobby warmups, and CDN cache purges with live plain-English translation and chronological execution previews.
+      </p>
+    </section>
+
+    <div class="workspace-grid">
+      <!-- Left Column: 5-Part Input Builder & Presets -->
+      <section class="panel builder-panel" aria-labelledby="builder-heading">
+        <div class="panel-header">
+          <div>
+            <span class="step-tag">01 · COMPOSE</span>
+            <h2 id="builder-heading">5-Part Cron Fields</h2>
+          </div>
+          <button type="button" id="reset-expression-btn" class="btn btn-ghost">Reset Default</button>
+        </div>
+
+        <div class="cron-fields-grid" role="group" aria-label="Cron expression fields">
+          <label class="field-card" data-field-card="minute">
+            <span class="field-meta">
+              <span class="field-name">Minute</span>
+              <span class="field-bounds">0–59</span>
+            </span>
+            <input type="text" id="cron-minute" class="cron-field-input" value="0" autocomplete="off" spellcheck="false" aria-label="Minute cron field" />
+            <span class="field-hint">e.g. 0 or */15</span>
+          </label>
+
+          <label class="field-card" data-field-card="hour">
+            <span class="field-meta">
+              <span class="field-name">Hour</span>
+              <span class="field-bounds">0–23</span>
+            </span>
+            <input type="text" id="cron-hour" class="cron-field-input" value="18" autocomplete="off" spellcheck="false" aria-label="Hour cron field" />
+            <span class="field-hint">e.g. 18 or 9-17</span>
+          </label>
+
+          <label class="field-card" data-field-card="day">
+            <span class="field-meta">
+              <span class="field-name">Day</span>
+              <span class="field-bounds">1–31</span>
+            </span>
+            <input type="text" id="cron-day" class="cron-field-input" value="*" autocomplete="off" spellcheck="false" aria-label="Day of month cron field" />
+            <span class="field-hint">day of month</span>
+          </label>
+
+          <label class="field-card" data-field-card="month">
+            <span class="field-meta">
+              <span class="field-name">Month</span>
+              <span class="field-bounds">1–12</span>
+            </span>
+            <input type="text" id="cron-month" class="cron-field-input" value="*" autocomplete="off" spellcheck="false" aria-label="Month cron field" />
+            <span class="field-hint">1–12 or JAN–DEC</span>
+          </label>
+
+          <label class="field-card" data-field-card="weekday">
+            <span class="field-meta">
+              <span class="field-name">Weekday</span>
+              <span class="field-bounds">0–6</span>
+            </span>
+            <input type="text" id="cron-weekday" class="cron-field-input" value="5-7" autocomplete="off" spellcheck="false" aria-label="Weekday cron field" />
+            <span class="field-hint">0/7 = Sun, MON–FRI</span>
+          </label>
+        </div>
+
+        <!-- Synchronized Expression Bar & Token Pills -->
+        <div class="expression-box">
+          <div class="expression-head">
+            <label for="full-expression-input">Full Cron Expression</label>
+            <button type="button" id="copy-expression-btn" class="btn btn-accent-sm">Copy</button>
+          </div>
+          <input
+            type="text"
+            id="full-expression-input"
+            class="full-expression-input"
+            value="0 18 * * 5-7"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Full 5-part cron expression"
+          />
+          <div id="cron-tokens" class="token-pills-bar" aria-label="Interactive cron token pills"></div>
+        </div>
+
+        <!-- Contextual Field Syntax Guide -->
+        <div class="field-guide-box" aria-live="polite">
+          <p id="field-guide-text" class="field-guide-text">Minute (MIN): 0–59 · Examples: * (every minute), 0, */15</p>
+          <div id="field-guide-examples" class="field-guide-examples" aria-label="Quick values for focused field"></div>
+        </div>
+
+        <div id="cron-error" class="error-banner" role="alert" hidden></div>
+
+        <!-- Streaming Cinema Hub Job Presets -->
+        <div class="presets-block">
+          <span class="presets-title">Cinema Pipeline Presets</span>
+          <div class="preset-grid">
+            <button type="button" class="preset-btn" data-cron="*/5 * * * *">
+              <span class="preset-name">Watch-Party Heartbeat</span>
+              <code class="preset-code">*/5 * * * *</code>
+            </button>
+            <button type="button" class="preset-btn" data-cron="0 * * * *">
+              <span class="preset-name">CDN Edge Cache Purge</span>
+              <code class="preset-code">0 * * * *</code>
+            </button>
+            <button type="button" class="preset-btn" data-cron="0 2 * * *">
+              <span class="preset-name">4K ProRes Transcode</span>
+              <code class="preset-code">0 2 * * *</code>
+            </button>
+            <button type="button" class="preset-btn" data-cron="30 9 * * 1-5">
+              <span class="preset-name">Editorial QC Sync</span>
+              <code class="preset-code">30 9 * * 1-5</code>
+            </button>
+            <button type="button" class="preset-btn is-active" data-cron="0 18 * * 5-7">
+              <span class="preset-name">Weekend Premiere Drop</span>
+              <code class="preset-code">0 18 * * 5-7</code>
+            </button>
+            <button type="button" class="preset-btn" data-cron="0 0 1 * *">
+              <span class="preset-name">Monthly Royalty Audit</span>
+              <code class="preset-code">0 0 1 * *</code>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Human-Readable Card & Chronological Next Runs -->
+      <div class="right-column">
+        <section class="panel explanation-panel" aria-labelledby="explanation-heading">
+          <div class="panel-header">
+            <div>
+              <span class="step-tag">02 · TRANSLATE</span>
+              <h2 id="explanation-heading">Human-Readable Schedule</h2>
+            </div>
+            <span class="live-pill">LIVE DECODE</span>
+          </div>
+
+          <div class="human-card">
+            <div class="human-icon" aria-hidden="true">🕒</div>
+            <p id="cron-human" class="human-explanation" aria-live="polite">
+              At 18:00 on Fridays through Sundays
+            </p>
+          </div>
+
+          <div id="field-breakdown" class="breakdown-grid" aria-label="Per-field decoded summary"></div>
+
+          <div class="telemetry-row">
+            <div class="telemetry-stat">
+              <span class="stat-label">Next Run In</span>
+              <strong id="next-countdown" class="stat-value">—</strong>
+            </div>
+            <div class="telemetry-stat">
+              <span class="stat-label">Run Cadence</span>
+              <strong id="cadence-badge" class="stat-value">—</strong>
+            </div>
+            <div class="telemetry-stat">
+              <span class="stat-label">Timezone</span>
+              <strong id="timezone-label" class="stat-value">Local Time</strong>
+            </div>
+          </div>
+
+          <div class="token-legend" aria-label="Token pill color key">
+            <span class="legend-item"><span class="swatch swatch-wildcard"></span>Wildcard</span>
+            <span class="legend-item"><span class="swatch swatch-step"></span>Step</span>
+            <span class="legend-item"><span class="swatch swatch-range"></span>Range</span>
+            <span class="legend-item"><span class="swatch swatch-list"></span>List</span>
+            <span class="legend-item"><span class="swatch swatch-fixed"></span>Fixed / Alias</span>
+          </div>
+        </section>
+
+        <section class="panel schedule-panel" aria-labelledby="schedule-heading">
+          <div class="panel-header">
+            <div>
+              <span class="step-tag">03 · TIMELINE</span>
+              <h2 id="schedule-heading">Upcoming Executions</h2>
+            </div>
+            <div class="schedule-controls">
+              <label class="sr-only" for="run-count-select">Number of upcoming runs</label>
+              <select id="run-count-select" class="run-count-select" aria-label="Upcoming runs count">
+                <option value="5" selected>Next 5</option>
+                <option value="10">Next 10</option>
+                <option value="15">Next 15</option>
+              </select>
+              <button type="button" id="refresh-runs-btn" class="btn btn-ghost">Refresh</button>
+            </div>
+          </div>
+
+          <ol id="next-runs" class="run-timeline" aria-live="polite"></ol>
+          <p id="runs-empty-note" class="runs-empty-note" hidden></p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="cron-footer">
+    <p>CINE-STREAM // Streaming Cinema Hub Isolated Showcase &middot; Standard 5-Part Cron Syntax (min hour dom month dow)</p>
+  </footer>
+
+  <script type="module" src="./cron-parser.js"></script>
+</body>
+</html>

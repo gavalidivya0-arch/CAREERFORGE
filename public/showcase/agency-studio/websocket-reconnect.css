@@ -1,4 +1,235 @@
-:root { --bg: #0b0f19; --card: #111827; --text: #f9fafb; --accent: #818cf8; }
-body { background: var(--bg); color: var(--text); padding: 2rem; font-family: system-ui, sans-serif; }
-.ws-container { max-width: 900px; margin: 0 auto; }
-h1 { color: var(--accent); }
+:root {
+  --bg: #0b0f19;
+  --card: #111827;
+  --text: #f9fafb;
+  --accent: #818cf8;
+  --accent-green: #34d399;
+  --accent-red: #f87171;
+  --accent-cyan: #67e8f9;
+  --backoff-yellow: #f59e0b;
+  --border-color: #1e293b;
+  --surface-dim: rgba(0, 0, 0, 0.3);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.ws-container {
+  background: var(--card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 2rem;
+  min-height: 400px;
+}
+
+/* Connection State Pill */
+.state-pill {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+  width: fit-content;
+  transition: all 0.2s ease;
+  border: 1px solid;
+}
+
+.state-pill.CONNECTED {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--accent-green);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.state-pill.RECONNECTING {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--accent-cyan);
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.state-pill.FAILED {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--accent-red);
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.state-pill.DISCONNECTED {
+  background: rgba(17, 24, 39, 0.15);
+  color: var(--text-muted);
+  border-color: var(--border-color);
+}
+
+/* Connection Controls */
+.ws-controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 110px;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.btn-primary:hover {
+  background: #6b7cef;
+}
+
+.btn-secondary {
+  background: var(--border-color);
+  color: var(--text);
+}
+
+.btn-secondary:hover {
+  background: #334155;
+}
+
+.btn-danger {
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--accent-red);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+}
+
+.btn-danger:hover {
+  background: rgba(248, 113, 113, 0.25);
+}
+
+/* Backoff Countdown Timer */
+.backoff-timer {
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-cyan);
+}
+
+.backoff-timer.hidden {
+  display: none;
+}
+
+.backoff-countdown {
+  font-weight: 600;
+  color: var(--backoff-yellow);
+}
+
+/* Queue Status */
+.queue-status {
+  background: rgba(17, 24, 39, 0.5);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.queue-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.queue-details {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Connection Timeline */
+.timeline-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.timeline-section h3 {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.timeline-log {
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.timeline-log .timeline-entry {
+  padding: 0.25rem 0;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--surface-dim);
+  white-space: pre-wrap;
+}
+
+/* Message Log Cards */
+.message-card {
+  background: rgba(17, 24, 39, 0.5);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.message-card.delivered {
+  border-left: 3px solid var(--accent-green);
+}
+
+.message-card.queued {
+  border-left: 3px solid var(--backoff-yellow);
+}
+
+.message-card.sent {
+  border-left: 3px solid var(--accent-cyan);
+}
+
+/* Entrance animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ws-container .btn-primary,
+.ws-container .btn-secondary,
+.ws-container .btn-danger {
+  animation: fadeInUp 0.3s ease forwards;
+}
+
+.ws-container .btn-primary { animation-delay: 0.1s; }
+.ws-container .btn-secondary { animation-delay: 0.2s; }
+.ws-container .btn-danger { animation-delay: 0.3s; }

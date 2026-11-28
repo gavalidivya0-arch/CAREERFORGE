@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto Exchange Pro - Distributed Raft Consensus Engine</title>
+  <link rel="stylesheet" href="raft-consensus.css">
+</head>
+<body>
+  <div class="raft-app">
+    <header class="raft-header">
+      <div class="header-copy">
+        <span class="header-pill">Crypto Exchange Pro · Core Consensus</span>
+        <h1>Distributed Raft Consensus &amp; Leader Election</h1>
+        <p>
+          Interactive 3-node / 5-node Raft state machine modeling Leader, Follower, and Candidate lifecycles,
+          randomized election timeouts, split votes, network partitions, and quorum log replication.
+        </p>
+      </div>
+      <div class="cluster-meta-bar">
+        <div class="meta-card">
+          <span class="meta-label">Current Term</span>
+          <strong id="cluster-term-value" class="meta-value">0</strong>
+        </div>
+        <div class="meta-card">
+          <span class="meta-label">Active Leader</span>
+          <strong id="cluster-leader-value" class="meta-value leader-none">None</strong>
+        </div>
+        <div class="meta-card">
+          <span class="meta-label">Majority Quorum</span>
+          <strong id="cluster-quorum-value" class="meta-value">3 / 5</strong>
+        </div>
+      </div>
+    </header>
+
+    <section class="control-toolbar" aria-label="Cluster Controls">
+      <div class="toolbar-group">
+        <label for="cluster-size-select" class="select-label">Cluster Size</label>
+        <select id="cluster-size-select" class="select-control">
+          <option value="5" selected>5-Node Cluster (Quorum 3)</option>
+          <option value="3">3-Node Cluster (Quorum 2)</option>
+        </select>
+        <button id="kill-leader-btn" type="button" class="btn btn-danger">Kill Leader</button>
+        <button id="toggle-partition-btn" type="button" class="btn btn-warning">Partition Network</button>
+      </div>
+      <div class="toolbar-group">
+        <button id="trigger-election-btn" type="button" class="btn btn-purple">Trigger Election</button>
+        <button id="split-vote-btn" type="button" class="btn btn-secondary">Simulate Split Vote</button>
+        <button id="step-tick-btn" type="button" class="btn btn-secondary">Step Tick (+90ms)</button>
+        <button id="auto-sim-btn" type="button" class="btn btn-primary">Start Auto-Tick</button>
+      </div>
+    </section>
+
+    <section class="cluster-stage" aria-label="Raft Cluster Diagram">
+      <div class="stage-header">
+        <h2>Cluster Topology &amp; Node States</h2>
+        <div class="legend">
+          <span class="legend-item legend-leader">Leader (Gold)</span>
+          <span class="legend-item legend-follower">Follower (Cyan)</span>
+          <span class="legend-item legend-candidate">Candidate (Purple)</span>
+          <span class="legend-item legend-offline">Offline</span>
+        </div>
+      </div>
+
+      <div class="diagram-wrapper">
+        <div id="packet-animation-layer" class="packet-layer" aria-hidden="true"></div>
+        <div id="cluster-nodes-grid" class="nodes-grid"></div>
+      </div>
+    </section>
+
+    <main class="bottom-panels">
+      <section class="panel-card" aria-label="Log Replication Viewer">
+        <div class="panel-top">
+          <h2>Replicated Order Ledger</h2>
+          <div class="command-bar">
+            <input
+              id="log-command-input"
+              type="text"
+              class="command-input"
+              placeholder="e.g. MATCH BTC-USD 1.5 @ 92400"
+              aria-label="Command to replicate"
+            >
+            <button id="replicate-log-btn" type="button" class="btn btn-primary">Replicate Log</button>
+          </div>
+        </div>
+        <div id="log-replication-viewer" class="log-viewer"></div>
+      </section>
+
+      <section class="panel-card" aria-label="Consensus Event Timeline">
+        <div class="panel-top">
+          <h2>RPC &amp; State Transition Feed</h2>
+        </div>
+        <div id="cluster-event-log" class="event-feed"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="raft-consensus.js"></script>
+</body>
+</html>
