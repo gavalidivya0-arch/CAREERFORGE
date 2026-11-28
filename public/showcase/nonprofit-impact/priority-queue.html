@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nonprofit Impact — Binary Heap Priority Event Queue &amp; Backpressure Dispatcher</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%8C%B1%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./priority-queue.css" />
+</head>
+<body class="nonprofit-pq-theme">
+  <a class="back-link" href="./index.html">← TerraInitia</a>
+
+  <main class="pq-shell">
+    <header class="pq-hero">
+      <p class="eyebrow">🌱 Nonprofit Impact · Core Engine</p>
+      <h1>Binary Heap Priority Event Queue &amp; Backpressure Dispatcher</h1>
+      <p class="lede">
+        Deterministic O(log n) binary max/min-heap scheduling with FIFO tie-breaking,
+        token-bucket rate pacing, and capacity backpressure telemetry for global climate relief events.
+      </p>
+      <ul class="engine-pills" aria-label="Engine guarantees">
+        <li>Binary Max / Min Heap</li>
+        <li>FIFO Tie-Breaking</li>
+        <li>Token-Bucket Pacing</li>
+        <li>Backpressure Guardrails</li>
+      </ul>
+    </header>
+
+    <section class="pq-grid-top" aria-label="Enqueue and telemetry controls">
+      <article class="panel enqueue-panel" aria-labelledby="enqueue-heading">
+        <div class="panel-head">
+          <div>
+            <h2 id="enqueue-heading">Enqueue Field Event</h2>
+            <p class="panel-sub">Push climate telemetry or relief grants into the heap with explicit priority rank.</p>
+          </div>
+          <label class="mode-control" for="pq-mode">
+            Heap mode
+            <select id="pq-mode">
+              <option value="max" selected>Max-Heap (Urgent = 4)</option>
+              <option value="min">Min-Heap (Urgent = 1)</option>
+            </select>
+          </label>
+        </div>
+
+        <form id="pq-form" class="pq-form" novalidate>
+          <div class="form-row">
+            <label class="field-group field-grow" for="pq-payload">
+              <span>Event payload</span>
+              <input
+                id="pq-payload"
+                type="text"
+                maxlength="120"
+                placeholder="e.g. Emergency flood relief — Assam Delta"
+                autocomplete="off"
+                required
+              />
+            </label>
+            <label class="field-group" for="pq-priority">
+              <span>Priority rank</span>
+              <select id="pq-priority">
+                <option value="Urgent">Urgent</option>
+                <option value="High">High</option>
+                <option value="Normal" selected>Normal</option>
+                <option value="Low">Low</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Enqueue Event</button>
+            <button type="button" id="pq-burst-btn" class="btn btn-secondary">Simulate +8 Burst</button>
+            <button type="button" id="pq-clear-btn" class="btn btn-ghost">Clear Queue</button>
+          </div>
+        </form>
+
+        <p id="pq-status" class="status-banner" aria-live="polite">Initializing priority dispatcher…</p>
+      </article>
+
+      <article class="panel gauge-panel" aria-labelledby="gauge-heading">
+        <div class="panel-head">
+          <div>
+            <h2 id="gauge-heading">Live Queue Depth &amp; Pacing</h2>
+            <p class="panel-sub">Backpressure threshold triggers elevated status at 75% utilization.</p>
+          </div>
+          <span id="pq-backpressure-badge" class="bp-badge" data-state="idle">IDLE</span>
+        </div>
+
+        <div class="gauge-block">
+          <div class="gauge-labels">
+            <span>Queue Depth</span>
+            <strong id="pq-depth-count">0 / 16</strong>
+          </div>
+          <div class="progress-track">
+            <div
+              id="pq-depth-bar"
+              class="progress-fill"
+              role="progressbar"
+              aria-label="Live queue depth"
+              aria-valuemin="0"
+              aria-valuenow="0"
+              aria-valuemax="16"
+              data-state="idle"
+            ></div>
+          </div>
+          <div class="gauge-foot">
+            <span id="pq-depth-text">0% capacity</span>
+            <span>Watermark: 75%</span>
+          </div>
+        </div>
+
+        <div class="gauge-block">
+          <div class="gauge-labels">
+            <span>Token Bucket Budget</span>
+            <strong id="pq-token-text">1.00 / 2 tokens</strong>
+          </div>
+          <div class="progress-track progress-track-token">
+            <div id="pq-token-bar" class="progress-fill progress-fill-token"></div>
+          </div>
+        </div>
+
+        <div class="sliders-row">
+          <label class="slider-group" for="pq-rate-slider">
+            <span class="slider-head">
+              <span>Dispatch rate limit</span>
+              <strong id="pq-rate-value">450 ms / event</strong>
+            </span>
+            <input id="pq-rate-slider" type="range" min="100" max="2000" step="50" value="450" />
+          </label>
+
+          <label class="slider-group" for="pq-capacity">
+            <span class="slider-head">
+              <span>Backpressure ceiling</span>
+              <strong id="pq-capacity-value">16 events</strong>
+            </span>
+            <input id="pq-capacity" type="range" min="6" max="32" step="2" value="16" />
+          </label>
+        </div>
+
+        <div class="dispatcher-actions">
+          <button type="button" id="pq-toggle-dispatcher" class="btn btn-primary">Pause Dispatcher</button>
+          <button type="button" id="pq-step-btn" class="btn btn-secondary">Step Dequeue</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="metrics-strip" aria-label="Dispatcher telemetry">
+      <article class="metric-card">
+        <span class="metric-label">Dispatched</span>
+        <strong id="metric-dispatched">0</strong>
+        <span class="metric-foot">rate-paced deliveries</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Dropped</span>
+        <strong id="metric-dropped">0</strong>
+        <span class="metric-foot">backpressure rejections</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Peak Depth</span>
+        <strong id="metric-peak">0</strong>
+        <span class="metric-foot">max heap size seen</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Avg Wait</span>
+        <strong id="metric-wait">0 ms</strong>
+        <span class="metric-foot">mean queue residency</span>
+      </article>
+      <article class="metric-card metric-card-wide">
+        <span class="metric-label">Next Peek</span>
+        <strong id="metric-peek">Empty</strong>
+        <span class="metric-foot">heap root candidate</span>
+      </article>
+    </section>
+
+    <section class="pq-workspace" aria-label="Live heap and processed feed">
+      <article class="panel list-panel" aria-labelledby="heap-heading">
+        <div class="panel-head">
+          <div>
+            <h2 id="heap-heading">Priority Queue Order</h2>
+            <p class="panel-sub">Non-destructive view ordered by heap rank and FIFO sequence.</p>
+          </div>
+        </div>
+        <ul id="pq-heap-list" class="pq-list" aria-live="polite"></ul>
+      </article>
+
+      <article class="panel list-panel" aria-labelledby="feed-heading">
+        <div class="panel-head">
+          <div>
+            <h2 id="feed-heading">Processed Event Feed</h2>
+            <p class="panel-sub">Rate-controlled deliveries and backpressure drop events.</p>
+          </div>
+          <button type="button" id="pq-clear-feed" class="btn btn-ghost btn-sm">Clear Feed</button>
+        </div>
+        <ul id="pq-feed-list" class="feed-list" aria-live="polite"></ul>
+      </article>
+    </section>
+  </main>
+
+  <script type="module" src="./priority-queue.js"></script>
+</body>
+</html>
