@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synapse Academy — Prefix Tree Typeahead &amp; Spell Distance Engine</title>
+  <link rel="stylesheet" href="trie-search.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="trie-shell" data-trie-lab>
+    <nav class="top-nav" aria-label="Breadcrumb">
+      <a href="index.html" class="back-link">← Back to Synapse Academy</a>
+      <span class="engine-badge">// CORE DATA STRUCTURE LAB</span>
+    </nav>
+
+    <header class="trie-hero">
+      <p class="eyebrow">EDTECH ACADEMY · PREFIX TREE &amp; LEVENSHTEIN ENGINE</p>
+      <h1>Curriculum Typeahead &amp; Spell Distance</h1>
+      <p class="subtitle">
+        Explore instant O(|prefix|) prefix completions, live Trie subtree edge traversal, and pruned
+        Levenshtein edit-distance typo recovery across AI &amp; systems engineering topics.
+      </p>
+      <div class="sample-bar" aria-label="Sample queries">
+        <span class="sample-label">Try:</span>
+        <button type="button" class="sample-chip" data-sample-query="quant">quant</button>
+        <button type="button" class="sample-chip" data-sample-query="tensor">tensor</button>
+        <button type="button" class="sample-chip" data-sample-query="llm">llm</button>
+        <button type="button" class="sample-chip" data-sample-query="pagdattenton">pagdattenton (typo)</button>
+        <button type="button" class="sample-chip" data-sample-query="kernl">kernl (typo)</button>
+      </div>
+    </header>
+
+    <section class="metrics-grid" aria-label="Trie engine telemetry">
+      <article class="metric-card">
+        <span class="metric-label">Indexed Terms</span>
+        <strong class="metric-value" id="metric-terms">0</strong>
+        <span class="metric-foot">Curriculum entries</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Trie Nodes</span>
+        <strong class="metric-value" id="metric-nodes">0</strong>
+        <span class="metric-foot">Shared prefix edges</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Prefix Hits</span>
+        <strong class="metric-value" id="metric-prefix">0</strong>
+        <span class="metric-foot">Exact subtree matches</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Fuzzy Hits</span>
+        <strong class="metric-value" id="metric-fuzzy">0</strong>
+        <span class="metric-foot">Within edit distance</span>
+      </article>
+      <article class="metric-card">
+        <span class="metric-label">Lookup Time</span>
+        <strong class="metric-value" id="metric-time">0.00 ms</strong>
+        <span class="metric-foot">Prefix + pruned DP</span>
+      </article>
+    </section>
+
+    <main class="workspace-grid">
+      <section class="panel search-panel" aria-labelledby="search-heading">
+        <div class="panel-header">
+          <div>
+            <h2 id="search-heading">01 / Instant Typeahead Search</h2>
+            <p class="panel-sub">Start typing a topic prefix or misspell a term to test Levenshtein fallback.</p>
+          </div>
+          <label class="distance-control" for="edit-distance">
+            <span>Max Edit Distance</span>
+            <select id="edit-distance">
+              <option value="0">0 edits (exact)</option>
+              <option value="1">1 edit</option>
+              <option value="2" selected>2 edits</option>
+              <option value="3">3 edits</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="combobox-wrap">
+          <label class="sr-only" for="term-search">Search curriculum topics</label>
+          <div class="search-input-box">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input
+              id="term-search"
+              type="text"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-controls="suggestions"
+              aria-expanded="false"
+              aria-describedby="search-status"
+              autocomplete="off"
+              spellcheck="false"
+              maxlength="64"
+              placeholder="Search topics (e.g. quant, tensor, pagdattenton)..."
+            />
+            <span class="kbd-hint" aria-hidden="true">↑ ↓ ↵</span>
+          </div>
+
+          <ul
+            id="suggestions"
+            class="suggestions-dropdown"
+            role="listbox"
+            aria-label="Autocomplete suggestions"
+            hidden
+          ></ul>
+        </div>
+
+        <p id="search-status" class="search-status" role="status" aria-live="polite">
+          Initializing Trie engine...
+        </p>
+
+        <div class="fuzzy-section">
+          <h3>Levenshtein Spell-Distance Suggestions</h3>
+          <div id="fuzzy-list" class="fuzzy-list" aria-live="polite"></div>
+        </div>
+
+        <form id="add-term-form" class="lexicon-form">
+          <div class="panel-header compact">
+            <h3>Curriculum Lexicon</h3>
+            <button type="button" id="reset-lexicon" class="btn-ghost">Restore Starters</button>
+          </div>
+          <label class="sr-only" for="new-term">Add new curriculum topic</label>
+          <div class="add-row">
+            <input
+              id="new-term"
+              type="text"
+              maxlength="64"
+              autocomplete="off"
+              placeholder="Insert new term (e.g. FlashDecoding)"
+            />
+            <button type="submit" class="btn-primary">Insert</button>
+          </div>
+          <p id="lexicon-status" class="lexicon-status" aria-live="polite"></p>
+          <ul id="lexicon-list" class="lexicon-list" aria-label="Indexed curriculum terms"></ul>
+        </form>
+      </section>
+
+      <section class="panel tree-panel" aria-labelledby="tree-heading">
+        <div class="panel-header">
+          <div>
+            <h2 id="tree-heading">02 / Interactive Trie Hierarchy</h2>
+            <p id="tree-caption" class="panel-sub">Live prefix subtree projection</p>
+          </div>
+          <div class="tree-actions">
+            <button type="button" id="expand-tree" class="btn-ghost">Expand</button>
+            <button type="button" id="collapse-tree" class="btn-ghost">Collapse</button>
+          </div>
+        </div>
+        <p class="tree-legend">
+          Edges denote character transitions (<kbd>␠</kbd> = space). Highlighted badges mark terminal words.
+        </p>
+        <div id="trie-tree" class="trie-tree" aria-label="Interactive prefix subtree"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="trie-search.js"></script>
+</body>
+</html>
