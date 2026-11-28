@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biotech Genomics — Merkle Tree Data Integrity</title>
+  <link rel="stylesheet" href="merkle-verifier.css">
+</head>
+<body class="merkle-body">
+  <div class="merkle-container">
+    <header class="merkle-header">
+      <h1>🌳 Merkle Tree Data Integrity Engine</h1>
+      <p>SHA-256 cryptographic verification for biotech genomics data sequences.</p>
+    </header>
+
+    <div class="merkle-input-card">
+      <label for="dataInput" class="input-label">Dataset (comma-separated DNA sequences)</label>
+      <textarea id="dataInput" class="data-textarea" rows="3" spellcheck="false"
+        placeholder="ATGCTG,GGTAAC,TTAGGC,ATCGAT"></textarea>
+      <div class="input-hints">Each entry is hashed via SHA-256 to form a leaf node. Odd counts duplicate the last leaf.</div>
+    </div>
+
+    <div class="merkle-controls">
+      <button id="buildBtn" class="btn btn-primary" type="button">Build Tree</button>
+      <button id="tamperBtn" class="btn btn-secondary" type="button">Tamper Simulation</button>
+    </div>
+
+    <div class="merkle-visualizer" id="treeVisualizer">
+      <p class="hint">Build a tree to visualize hierarchical SHA-256 hashing.</p>
+    </div>
+
+    <div class="proof-verification-card">
+      <h3>🔐 Cryptographic Proof Verification</h3>
+      <div class="proof-controls">
+        <label for="proofIndex" class="input-label" style="margin:0;">Leaf index</label>
+        <input type="number" id="proofIndex" min="0" value="0" class="proof-input">
+        <button id="verifyProofBtn" class="btn btn-primary" type="button">Generate &amp; Verify Proof</button>
+      </div>
+      <div id="proofStatus" class="proof-status">
+        <span class="status-pill status-neutral">Awaiting proof</span>
+      </div>
+      <div id="proofPath" class="proof-path"></div>
+    </div>
+
+    <div class="root-hash-display">
+      <span class="root-label">Root Hash</span>
+      <span id="rootHash" class="root-hash">—</span>
+      <span id="rootStatus" class="status-pill status-neutral">Not built</span>
+    </div>
+
+    <nav>
+      <a href="index.html" class="back-link">← Return to Biotech Genomics Showcase</a>
+    </nav>
+  </div>
+
+  <script type="module" src="merkle-verifier.js"></script>
+</body>
+</html>
