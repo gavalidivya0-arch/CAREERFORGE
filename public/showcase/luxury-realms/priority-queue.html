@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luxury Realms — Binary Heap Priority Queue &amp; Backpressure Dispatcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="priority-queue.css">
+</head>
+<body>
+  <div class="pq-shell" data-luxury-priority-queue>
+    <header class="pq-header">
+      <div class="brand-pill">Luxury Realms • Core Event Engine</div>
+      <h1>Concierge <span>Priority Queue</span> &amp; Backpressure Dispatcher</h1>
+      <p>Binary heap task scheduler with strict FIFO tie-breaking, token-bucket dispatch pacing, and live queue saturation guardrails.</p>
+    </header>
+
+    <!-- Backpressure & Queue Depth Telemetry -->
+    <section class="panel-surface telemetry-cockpit" aria-label="Queue depth and token bucket gauges">
+      <div class="cockpit-top">
+        <div>
+          <h2>Live Queue Depth &amp; Backpressure Monitor</h2>
+          <p class="subcopy">Real-time binary heap occupancy against backpressure capacity limits.</p>
+        </div>
+        <div class="cockpit-badges">
+          <label class="mode-control" for="heapModeSelect">
+            <span>Heap Mode</span>
+            <select id="heapModeSelect" class="luxury-select compact-select">
+              <option value="max" selected>Max-Heap (Urgent First)</option>
+              <option value="min">Min-Heap (Lowest Rank First)</option>
+            </select>
+          </label>
+          <span id="backpressureBadge" class="bp-badge bp-nominal">NOMINAL</span>
+        </div>
+      </div>
+
+      <div class="gauges-grid">
+        <div class="gauge-card">
+          <div class="gauge-meta">
+            <span>Queue Depth Gauge</span>
+            <strong id="depthGaugeText">0 / 20 (0%)</strong>
+          </div>
+          <div class="progress-track" role="progressbar" aria-label="Queue depth utilization">
+            <div id="depthGaugeBar" class="progress-fill level-nominal" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="gauge-card">
+          <div class="gauge-meta">
+            <span>Token-Bucket Pacing</span>
+            <strong id="tokenGaugeText">1.00 / 1 token</strong>
+          </div>
+          <div class="progress-track">
+            <div id="tokenGaugeBar" class="progress-fill token-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics-strip">
+        <div class="metric-box">
+          <span class="metric-label">Queued Now</span>
+          <strong class="metric-value" id="metricQueued">0</strong>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Dispatched</span>
+          <strong class="metric-value accent-emerald" id="metricDispatched">0</strong>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Dropped (Backpressure)</span>
+          <strong class="metric-value accent-crimson" id="metricDropped">0</strong>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">Avg Queue Wait</span>
+          <strong class="metric-value accent-gold" id="metricAvgWait">0 ms</strong>
+        </div>
+      </div>
+    </section>
+
+    <div id="backpressureToast" class="backpressure-toast" role="status" aria-live="polite"></div>
+
+    <!-- Main Interactive Workspace -->
+    <main class="workspace-grid">
+      <!-- Left Column: Enqueue Form & Rate Controller -->
+      <section class="panel-surface control-panel">
+        <h2>Task Enqueue &amp; Rate Controller</h2>
+
+        <form id="enqueueForm" class="enqueue-form">
+          <div class="field-group">
+            <label for="eventPayloadInput">Concierge Event Payload</label>
+            <input
+              id="eventPayloadInput"
+              type="text"
+              maxlength="120"
+              placeholder="e.g. Private Jet Diversion — Geneva Slot Clearance"
+              autocomplete="off"
+            >
+          </div>
+
+          <div class="field-group">
+            <label for="priorityRankSelect">Priority Rank</label>
+            <select id="priorityRankSelect" class="luxury-select">
+              <option value="Urgent">Urgent (Rank 4 — Immediate)</option>
+              <option value="High">High (Rank 3 — Elevated)</option>
+              <option value="Normal" selected>Normal (Rank 2 — Standard)</option>
+              <option value="Low">Low (Rank 1 — Background)</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-gold">Enqueue Event</button>
+            <button type="button" id="btnBurstStress" class="btn btn-outline">Inject 8x Concierge Burst</button>
+          </div>
+        </form>
+
+        <div class="divider"></div>
+
+        <div class="rate-controller">
+          <div class="rate-header">
+            <label for="dispatchRateSlider">Dispatch Rate Interval</label>
+            <div class="rate-readout">
+              <strong id="dispatchRateValue">650 ms</strong>
+              <span id="dispatchThroughputValue">1.54 events/sec</span>
+            </div>
+          </div>
+
+          <input
+            id="dispatchRateSlider"
+            class="rate-slider"
+            type="range"
+            min="100"
+            max="2500"
+            step="50"
+            value="650"
+          >
+
+          <div class="slider-scale">
+            <span>100ms (Fast)</span>
+            <span>1250ms</span>
+            <span>2500ms (Throttled)</span>
+          </div>
+
+          <div class="dispatcher-controls">
+            <button type="button" id="btnToggleDispatcher" class="btn btn-emerald">⏸ Pause Dispatcher</button>
+            <button type="button" id="btnClearQueue" class="btn btn-danger">Clear Heap</button>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="heap-inspector">
+          <div class="section-subhead">
+            <h3>Pending Binary Heap Order</h3>
+            <span class="hint">Sorted by priority &amp; FIFO seq</span>
+          </div>
+          <div id="heapPreviewList" class="heap-list">
+            <div class="empty-state">Heap is idle — enqueue an estate concierge event to observe priority ordering.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Processed Event Feed -->
+      <section class="panel-surface feed-panel">
+        <div class="feed-header">
+          <div>
+            <h2>Processed Event Feed</h2>
+            <p class="subcopy">Rate-limited dispatches ordered by priority rank and FIFO sequence.</p>
+          </div>
+          <button type="button" id="btnClearFeed" class="btn btn-ghost">Clear Feed</button>
+        </div>
+
+        <div id="processedFeed" class="processed-feed" aria-live="polite">
+          <div class="empty-state">Awaiting dispatched concierge events…</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="priority-queue.js"></script>
+</body>
+</html>
