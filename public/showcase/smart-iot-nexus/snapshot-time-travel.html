@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart IoT Nexus - State Snapshot & Time-Travel Debugger</title>
+  <link rel="stylesheet" href="snapshot-time-travel.css">
+</head>
+<body>
+  <div class="snapshot-page">
+    <div class="section-header">
+      <h1>🕰️ State Snapshot & Time-Travel</h1>
+      <p>Bidirectional replay engine for IoT device state inspection</p>
+    </div>
+
+    <div class="scrubber-container">
+      <div class="scrubber-track" id="scrubber-track">
+        <div class="scrubber-tick" style="left: 0%;"></div>
+        <div class="scrubber-tick-label">0</div>
+        <div class="scrubber-tick" style="left: 50%;"></div>
+        <div class="scrubber-tick-label">50%</div>
+        <div class="scrubber-tick" style="left: 100%;"></div>
+        <div class="scrubber-tick-label">100%</div>
+      </div>
+      <div class="scrubber-cursor" id="scrubber-cursor" style="left: 0%;"></div>
+    </div>
+
+    <div class="control-panel">
+      <button class="control-btn" id="undo-btn">⮀ Undo</button>
+      <button class="control-btn primary" id="redo-btn">Redo ⮂</button>
+      <button class="control-btn" id="step-backward-btn">⏪ Step Back</button>
+      <button class="control-btn" id="step-forward-btn">Step Forward ⏩</button>
+      <button class="control-btn" id="play-pause-btn">▶ Play</button>
+      <button class="control-btn" id="commit-snapshot-btn">Commit Snapshot</button>
+    </div>
+
+    <div class="diff-inspector" id="diff-inspector">
+      <div>
+        <span class="badge badge-gray">no diff</span>
+        <span class="badge badge-gray">no diff</span>
+        <span class="badge badge-gray">no diff</span>
+      </div>
+      <pre id="diff-output">No snapshots captured yet. Commit a snapshot to begin.</pre>
+    </div>
+
+    <button class="json-export-btn" id="export-history-btn">Export History JSON</button>
+
+    <div class="section-header" style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+      <span>Snapshots: <span id="snapshot-count">0</span></span>
+      <span>Index: <span id="current-index">—</span></span>
+    </div>
+  </div>
+
+  <script type="module" src="snapshot-time-travel.js"></script>
+</body>
+</html>
