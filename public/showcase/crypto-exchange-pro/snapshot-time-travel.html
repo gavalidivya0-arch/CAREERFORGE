@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto Exchange Pro — Immutable State Snapshot &amp; Time-Travel Debugger</title>
+  <link rel="stylesheet" href="./snapshot-time-travel.css">
+</head>
+<body>
+  <main class="time-travel-container" data-crypto-time-travel>
+    <header class="page-header">
+      <a href="index.html" class="back-link">&larr; Back to Crypto Exchange Pro</a>
+      <div class="header-badge">CRYPTO-EXCHANGE-PRO • TIME-TRAVEL ENGINE v1.0</div>
+      <h1>Immutable State Snapshot &amp; Bidirectional Time-Travel Debugger</h1>
+      <p class="subtitle">Scrub order-book and risk-engine history, inspect red/green property diffs, toggle frame breakpoints, and export portable JSON timelines.</p>
+
+      <div class="status-summary-bar">
+        <div class="summary-chip">Frame: <strong id="current-frame-val">0 / 0</strong></div>
+        <div class="summary-chip">Label: <strong id="current-label-val">Initial Exchange State</strong></div>
+        <div class="summary-chip">Status: <strong id="playback-status-val">Paused</strong></div>
+        <div class="summary-chip">History: <strong id="history-count-val">0 Snapshots</strong></div>
+      </div>
+    </header>
+
+    <!-- Timeline Scrubber & Bidirectional Playback Controls -->
+    <section class="scrubber-card" aria-label="Timeline Scrubber">
+      <div class="scrubber-header-row">
+        <h2>Timeline Scrubber &amp; Replay Controls</h2>
+        <div class="playback-controls">
+          <button id="play-back-btn" type="button" class="control-btn" title="Play Reverse">◀ Play Reverse</button>
+          <button id="step-back-btn" type="button" class="control-btn" title="Step Backward (Undo)">⏮ Undo</button>
+          <button id="play-fwd-btn" type="button" class="control-btn play-btn" title="Play Forward">▶ Play Forward</button>
+          <button id="step-fwd-btn" type="button" class="control-btn" title="Step Forward (Redo)">⏭ Redo</button>
+          <button id="toggle-bp-btn" type="button" class="control-btn bp-btn" title="Toggle Breakpoint at Current Frame">○ Set Breakpoint</button>
+          <button id="export-btn" type="button" class="control-btn export-btn" title="Export History JSON">💾 Export JSON</button>
+          <button id="import-btn" type="button" class="control-btn" title="Import History JSON">📂 Import JSON</button>
+          <input id="import-file-input" type="file" accept=".json,application/json" hidden>
+        </div>
+      </div>
+
+      <div id="breakpoint-alert" class="breakpoint-alert" role="status" hidden></div>
+
+      <div class="scrubber-wrapper">
+        <div class="scrubber-track-container">
+          <div class="scrubber-track-rail" aria-hidden="true"></div>
+          <div id="frame-cursor" class="frame-cursor" aria-hidden="true"></div>
+          <div id="tick-marks" class="tick-marks" aria-label="Snapshot Frame Ticks"></div>
+          <input id="timeline-slider" type="range" min="0" max="0" value="0" class="timeline-slider" aria-label="Snapshot Frame Scrubber">
+        </div>
+        <div class="scrubber-labels">
+          <span id="start-frame-label">Frame #0</span>
+          <span id="current-frame-indicator" class="active-frame-tag">Frame #0</span>
+          <span id="end-frame-label">Frame #0</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="main-split-grid">
+      <!-- Left Column: State Mutation Form & Current Snapshot Viewer -->
+      <section class="state-control-col">
+        <div class="panel-card">
+          <h2>Commit Exchange State Snapshot</h2>
+          <form id="state-form" class="state-form">
+            <div class="form-row-grid">
+              <div class="form-row">
+                <label for="pair-select" class="field-label">Trading Pair</label>
+                <select id="pair-select" class="form-select">
+                  <option value="BTC-USDT" selected>BTC-USDT</option>
+                  <option value="ETH-USDT">ETH-USDT</option>
+                  <option value="SOL-USDT">SOL-USDT</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label for="circuit-breaker-select" class="field-label">Circuit Breaker</label>
+                <select id="circuit-breaker-select" class="form-select">
+                  <option value="ARMED" selected>ARMED</option>
+                  <option value="TRIGGERED">TRIGGERED</option>
+                  <option value="COOLDOWN">COOLDOWN</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row-grid">
+              <div class="form-row">
+                <label for="best-bid-input" class="field-label">Best Bid (USDT)</label>
+                <input id="best-bid-input" type="number" step="0.5" value="98510" class="form-input">
+              </div>
+              <div class="form-row">
+                <label for="best-ask-input" class="field-label">Best Ask (USDT)</label>
+                <input id="best-ask-input" type="number" step="0.5" value="98512.5" class="form-input">
+              </div>
+            </div>
+
+            <div class="form-row-grid">
+              <div class="form-row">
+                <label for="position-size-input" class="field-label">Position Size (BTC)</label>
+                <input id="position-size-input" type="number" step="0.25" value="2.0" class="form-input">
+              </div>
+              <div class="form-row">
+                <label for="margin-health-input" class="field-label">Margin Health (%)</label>
+                <input id="margin-health-input" type="number" step="0.1" min="0" max="100" value="92.4" class="form-input">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="commit-label-input" class="field-label">Snapshot Transition Label</label>
+              <input id="commit-label-input" type="text" value="Market Maker Quote Update" class="form-input" placeholder="e.g. Limit Order Fill">
+            </div>
+
+            <button type="submit" class="primary-btn commit-btn">📸 Commit Immutable Snapshot</button>
+          </form>
+        </div>
+
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Breakpoint Watch Properties</h2>
+            <span class="meta-tag">Auto-Pause on Change</span>
+          </div>
+          <div class="watch-input-row">
+            <input id="watch-key-input" type="text" class="form-input" placeholder="Property key (e.g. circuitBreaker)">
+            <button id="add-watch-btn" type="button" class="control-btn">Add Watch</button>
+          </div>
+          <div id="watch-keys-list" class="watch-keys-list"></div>
+        </div>
+
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Current Snapshot State</h2>
+            <span id="snapshot-id-tag" class="meta-tag">snapshot-0</span>
+          </div>
+          <pre id="state-viewer" class="json-viewer"></pre>
+        </div>
+      </section>
+
+      <!-- Right Column: Visual Property Diff Inspector & Timeline Frames -->
+      <section class="diff-inspector-col">
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Visual State Diff Inspector</h2>
+            <span id="diff-count-badge" class="meta-tag">Baseline</span>
+          </div>
+          <p class="diff-intro">Property-level mutations compared against the preceding snapshot, highlighted with red/green status badges.</p>
+          <div id="diff-inspector" class="diff-inspector-list">
+            <p class="empty-diff-hint">Baseline frame: no prior snapshot to compare against.</p>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Snapshot Timeline Log</h2>
+            <span id="timeline-count-badge" class="meta-tag">0 Frames</span>
+          </div>
+          <div id="history-frames-list" class="history-frames-list"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./snapshot-time-travel.js"></script>
+</body>
+</html>
