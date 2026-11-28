@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Health &amp; Vitality — Merkle Tree Integrity &amp; Cryptographic Proof Verifier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./merkle-verifier.css" />
+</head>
+<body>
+  <div class="merkle-container" data-merkle-verifier>
+    <header class="merkle-header">
+      <a href="index.html" class="back-link">&larr; Back to Health &amp; Vitality</a>
+      <div class="header-badge">HEALTH VITALITY • CRYPTOGRAPHIC DATA INTEGRITY ENGINE</div>
+      <h1>Biometric Merkle Tree &amp; <span>Proof Verifier</span></h1>
+      <p class="subtitle">
+        SHA-256 balanced binary hash tree engine for clinical telemetry records, audit path generation, and sub-millisecond inclusion proof verification.
+      </p>
+    </header>
+
+    <main class="merkle-layout">
+      <!-- Dataset Input Container -->
+      <section class="card dataset-card" aria-labelledby="dataset-heading">
+        <div class="card-header-row">
+          <h2 id="dataset-heading">Biometric Records Dataset</h2>
+          <span id="leaf-count-badge" class="root-pill pill-ready">0 leaf records</span>
+        </div>
+        <p class="card-desc">
+          Enter one clinical biomarker or wearable telemetry record per line to compute SHA-256 leaf digests and construct a balanced binary Merkle tree.
+        </p>
+
+        <textarea
+          id="dataset-input"
+          class="dataset-textarea"
+          rows="6"
+          spellcheck="false"
+          aria-label="Biometric dataset records"
+          placeholder="Enter one health telemetry record per line..."
+        ></textarea>
+
+        <div class="control-row">
+          <button id="build-tree-btn" type="button" class="btn btn-primary">Build Merkle Tree</button>
+          <button id="preset-4-btn" type="button" class="btn btn-secondary">Load 4 Records</button>
+          <button id="preset-7-btn" type="button" class="btn btn-secondary">Load 7 Records (Odd)</button>
+        </div>
+
+        <div class="selector-group">
+          <label for="leaf-select" class="field-label">Target Leaf Record for Audit Proof</label>
+          <select id="leaf-select" class="leaf-select"></select>
+        </div>
+      </section>
+
+      <!-- Proof Verification Status Card -->
+      <section class="card verification-card" aria-labelledby="verification-heading">
+        <div class="card-header-row">
+          <h2 id="verification-heading">Proof Verification Status</h2>
+          <div id="root-status-pill" class="status-pill pill-ready">READY</div>
+        </div>
+
+        <div class="metrics-strip">
+          <div class="metric-box">
+            <span class="metric-label">Verification Time</span>
+            <span id="exec-time-badge" class="metric-val">0.000 ms</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Tree Depth</span>
+            <span id="tree-depth-stat" class="metric-val">Depth 0</span>
+          </div>
+        </div>
+
+        <div class="hash-comparison">
+          <div class="hash-row">
+            <span class="field-label">Committed Merkle Root</span>
+            <code id="expected-root-hash" class="hash-readout">—</code>
+          </div>
+          <div class="hash-row">
+            <span class="field-label">Computed Proof Root</span>
+            <code id="computed-root-hash" class="hash-readout">—</code>
+          </div>
+          <div class="hash-row">
+            <span class="field-label">Evaluated Leaf Payload</span>
+            <div id="selected-leaf-payload" class="payload-readout">—</div>
+          </div>
+        </div>
+
+        <p id="verification-detail" class="verification-detail">
+          Select a leaf record to inspect its cryptographic audit path.
+        </p>
+
+        <div class="control-row">
+          <button id="verify-proof-btn" type="button" class="btn btn-verify">Verify Proof</button>
+          <button id="tamper-btn" type="button" class="btn btn-tamper">Simulate Tamper</button>
+          <button id="restore-btn" type="button" class="btn btn-secondary" disabled>Restore Integrity</button>
+        </div>
+
+        <div class="audit-path-section">
+          <span class="field-label">Cryptographic Audit Path (Sibling Hashes)</span>
+          <ul id="proof-path-list" class="proof-path-list"></ul>
+        </div>
+      </section>
+
+      <!-- Tree Depth Visualizer -->
+      <section class="card visualizer-card" aria-labelledby="visualizer-heading">
+        <div class="card-header-row">
+          <h2 id="visualizer-heading">Balanced Binary Tree Depth Visualizer</h2>
+          <div class="legend-group">
+            <span class="legend-chip chip-verified">Audit Path</span>
+            <span class="legend-chip chip-sibling">Proof Sibling</span>
+            <span class="legend-chip chip-tampered">Tamper Mismatch</span>
+          </div>
+        </div>
+        <p class="card-desc">
+          Click any leaf node to generate its cryptographic inclusion proof and highlight the verification path from leaf to root. Odd-count levels duplicate the trailing node hash to remain balanced.
+        </p>
+
+        <div id="tree-visualizer" class="tree-visualizer" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./merkle-verifier.js"></script>
+</body>
+</html>
