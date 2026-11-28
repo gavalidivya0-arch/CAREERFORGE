@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BEAT-FORGE // Music DAW Studio — WCAG Color Contrast Matrix &amp; Palette Verifier</title>
+  <link rel="stylesheet" href="./color-contrast-auditor.css" />
+</head>
+<body>
+  <div class="contrast-shell" data-contrast-lab>
+    <header class="topbar">
+      <a class="back-link" href="./index.html">&larr; BEAT-FORGE STUDIO</a>
+      <span class="scope-badge">WCAG 2.1 // DAW CONTRAST MATRIX</span>
+    </header>
+
+    <section class="hero">
+      <h1>WCAG Color Contrast Matrix &amp; Palette Verifier</h1>
+      <p class="subtitle">
+        Audit foreground and background luminance ratios for Music DAW Studio mixer strips, step pads, and synthesizer controls against WCAG 2.1 AA (4.5:1) and AAA (7.0:1) standards.
+      </p>
+    </section>
+
+    <main class="auditor-layout">
+      <!-- Color Pickers & Remediation Controls -->
+      <section class="card pickers-card" aria-labelledby="pickers-heading">
+        <h2 id="pickers-heading">Foreground &amp; Background Selectors</h2>
+
+        <div class="picker-group">
+          <div class="picker-label-row">
+            <label for="fg-color">Foreground / Text Color</label>
+            <span id="fg-luminance" class="luminance-pill">L = 0.3767</span>
+          </div>
+          <div class="color-row">
+            <input type="color" id="fg-color" value="#e879f9" aria-label="Foreground text color picker" />
+            <input type="text" id="fg-hex-input" value="#E879F9" maxlength="7" spellcheck="false" aria-label="Foreground text hex code" />
+          </div>
+        </div>
+
+        <div class="picker-group">
+          <div class="picker-label-row">
+            <label for="bg-color">Background Color</label>
+            <span id="bg-luminance" class="luminance-pill">L = 0.0031</span>
+          </div>
+          <div class="color-row">
+            <input type="color" id="bg-color" value="#090a0f" aria-label="Background color picker" />
+            <input type="text" id="bg-hex-input" value="#090A0F" maxlength="7" spellcheck="false" aria-label="Background hex code" />
+          </div>
+        </div>
+
+        <p id="hex-error" class="hex-error" role="alert" aria-live="assertive"></p>
+
+        <div class="action-row">
+          <button type="button" id="swap-colors-btn" class="btn btn-secondary">Swap Colors</button>
+          <button type="button" id="fix-aa-btn" class="btn btn-accent">Suggest AA (4.5:1)</button>
+          <button type="button" id="fix-aaa-btn" class="btn btn-accent">Suggest AAA (7.0:1)</button>
+        </div>
+
+        <div class="presets-section">
+          <h3>Quick BEAT-FORGE Presets</h3>
+          <div class="preset-buttons">
+            <button type="button" id="preset-orchid-obsidian" class="btn btn-preset">Synth Orchid / Obsidian</button>
+            <button type="button" id="preset-cyan-obsidian" class="btn btn-preset">Telemetry Cyan / Obsidian</button>
+            <button type="button" id="preset-white-console" class="btn btn-preset">Studio White / Console</button>
+            <button type="button" id="preset-low-contrast" class="btn btn-preset">Neon Magenta / White (Warn)</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contrast Ratio Gauge & Compliance Matrix -->
+      <section class="card compliance-card" aria-labelledby="evaluation-heading">
+        <div class="card-head-row">
+          <h2 id="evaluation-heading">Contrast Ratio &amp; WCAG Tiers</h2>
+          <span id="overall-grade" class="grade-pill grade-aaa">AAA PASS</span>
+        </div>
+
+        <div class="ratio-gauge" role="status" aria-live="polite">
+          <span class="gauge-label">Calculated Luminance Ratio</span>
+          <div id="ratio-display" class="gauge-value">8.03 : 1</div>
+          <div
+            id="ratio-gauge-track"
+            class="gauge-track"
+            role="meter"
+            aria-label="Contrast ratio gauge from 1 to 21"
+            aria-valuemin="1"
+            aria-valuemax="21"
+            aria-valuenow="8.03"
+          >
+            <div id="ratio-gauge-fill" class="gauge-fill fill-aaa" style="width: 68.4%;"></div>
+            <span class="gauge-tick" style="left: 36.1%;" title="3.0:1 Large AA / UI"></span>
+            <span class="gauge-tick" style="left: 49.4%;" title="4.5:1 Normal AA / Large AAA"></span>
+            <span class="gauge-tick" style="left: 63.9%;" title="7.0:1 Normal AAA"></span>
+          </div>
+          <div class="gauge-scale" aria-hidden="true">
+            <span class="scale-start">1:1</span>
+            <span class="scale-mark" style="left: 36.1%;">3.0</span>
+            <span class="scale-mark" style="left: 49.4%;">4.5</span>
+            <span class="scale-mark" style="left: 63.9%;">7.0</span>
+            <span class="scale-end">21:1</span>
+          </div>
+        </div>
+
+        <div class="compliance-matrix">
+          <div class="compliance-row">
+            <span>Normal Text (AA &ge; 4.5:1)</span>
+            <span id="tag-normal-aa" class="status-chip chip-pass">PASS</span>
+          </div>
+          <div class="compliance-row">
+            <span>Normal Text (AAA &ge; 7.0:1)</span>
+            <span id="tag-normal-aaa" class="status-chip chip-pass">PASS</span>
+          </div>
+          <div class="compliance-row">
+            <span>Large Text (AA &ge; 3.0:1)</span>
+            <span id="tag-large-aa" class="status-chip chip-pass">PASS</span>
+          </div>
+          <div class="compliance-row">
+            <span>Large Text (AAA &ge; 4.5:1)</span>
+            <span id="tag-large-aaa" class="status-chip chip-pass">PASS</span>
+          </div>
+          <div class="compliance-row">
+            <span>UI Controls &amp; Fader Icons (&ge; 3.0:1)</span>
+            <span id="tag-ui" class="status-chip chip-pass">PASS</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live Sample Text Preview Frame -->
+      <section class="card preview-card" aria-labelledby="preview-heading">
+        <div class="preview-header">
+          <h2 id="preview-heading">Live Studio Console Sample Text Preview</h2>
+          <div class="preview-controls">
+            <input
+              type="text"
+              id="sample-text-input"
+              class="sample-input"
+              value="Channel 04 // Analog Bassline: 128.0 BPM · Low-Pass Cutoff 840 Hz · Master Bus -1.2 dBFS"
+              aria-label="Customize preview sample text"
+            />
+            <button
+              type="button"
+              id="toggle-frame-contrast-btn"
+              class="btn btn-secondary"
+              aria-pressed="false"
+            >
+              High-Contrast Frame: OFF
+            </button>
+          </div>
+        </div>
+
+        <div id="preview-frame" class="preview-frame">
+          <h3 class="preview-large">BEAT-FORGE // 16-Step Sequencer &amp; Poly Synth (Large Text 24px Bold)</h3>
+          <p id="preview-body-copy" class="preview-normal">
+            Channel 04 // Analog Bassline: 128.0 BPM · Low-Pass Cutoff 840 Hz · Master Bus -1.2 dBFS
+          </p>
+          <div class="preview-ui-row">
+            <span class="preview-chip">BPM: 128.0</span>
+            <span class="preview-chip">SYNC LOCKED</span>
+            <span class="preview-outline-btn">Arm Track 04</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- N x N Palette Contrast Matrix & Verifier -->
+      <section class="card matrix-card" aria-labelledby="matrix-heading">
+        <div class="matrix-header">
+          <div>
+            <h2 id="matrix-heading">N&times;N Palette Contrast Matrix &amp; Verifier</h2>
+            <p id="matrix-summary" class="matrix-summary" aria-live="polite">Loading palette matrix...</p>
+          </div>
+          <div class="matrix-filters" role="group" aria-label="Filter contrast matrix pairs">
+            <button type="button" class="btn btn-filter is-active" data-matrix-filter="all" aria-pressed="true">All Pairs</button>
+            <button type="button" class="btn btn-filter" data-matrix-filter="aa" aria-pressed="false">AA+ (&ge;4.5)</button>
+            <button type="button" class="btn btn-filter" data-matrix-filter="aaa" aria-pressed="false">AAA (&ge;7.0)</button>
+            <button type="button" class="btn btn-filter" data-matrix-filter="large" aria-pressed="false">Large Only (&ge;3.0)</button>
+            <button type="button" class="btn btn-filter" data-matrix-filter="fail" aria-pressed="false">Failing (&lt;4.5)</button>
+          </div>
+        </div>
+
+        <div class="palette-toolbar">
+          <div class="palette-add-group">
+            <input type="color" id="palette-new-color" value="#d946ef" aria-label="New palette swatch color" />
+            <input type="text" id="palette-new-name" placeholder="Swatch label (e.g. Pad Violet)" maxlength="24" aria-label="New palette swatch label" />
+            <button type="button" id="palette-add-btn" class="btn btn-secondary">Add Swatch</button>
+            <button type="button" id="palette-reset-btn" class="btn btn-preset">Reset Palette</button>
+          </div>
+          <div id="palette-swatches" class="palette-swatches"></div>
+        </div>
+
+        <p class="matrix-hint">Click any cell in the matrix to load that Background / Foreground pairing into the inspector.</p>
+
+        <div class="matrix-scroll">
+          <table id="contrast-matrix-table" class="matrix-table"></table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="./color-contrast-auditor.js"></script>
+</body>
+</html>
