@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color Contrast Auditor — Pulse Wave 2026</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="color-contrast-auditor.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <a href="index.html" class="back-link" aria-label="Back to Pulse Wave 2026">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    <span>Pulse Wave 2026</span>
+  </a>
+
+  <main class="auditor-page">
+    <header class="page-header">
+      <div class="brand-badge">PULSE WAVE</div>
+      <h1>WCAG Color Contrast Auditor</h1>
+      <p class="page-subtitle">Test foreground/background color pairs against WCAG 2.1 AA/AAA standards. Built for accessible festival design.</p>
+    </header>
+
+    <section class="panel color-picker-panel" aria-labelledby="picker-title">
+      <h2 id="picker-title" class="panel-title">Color Pair Selector</h2>
+      <div class="picker-grid">
+        <div class="color-field">
+          <label for="fg-color" class="field-label">Foreground (Text)</label>
+          <div class="color-input-wrap">
+            <input type="color" id="fg-color" value="#ec4899" aria-label="Foreground color">
+            <input type="text" id="fg-hex" value="#EC4899" class="hex-input" aria-label="Foreground hex value" spellcheck="false" autocomplete="off">
+          </div>
+          <select id="fg-preset" class="preset-select" aria-label="Foreground color presets"></select>
+        </div>
+
+        <div class="color-field">
+          <label for="bg-color" class="field-label">Background</label>
+          <div class="color-input-wrap">
+            <input type="color" id="bg-color" value="#0b0716" aria-label="Background color">
+            <input type="text" id="bg-hex" value="#0B0716" class="hex-input" aria-label="Background hex value" spellcheck="false" autocomplete="off">
+          </div>
+          <select id="bg-preset" class="preset-select" aria-label="Background color presets"></select>
+        </div>
+
+        <button type="button" id="btn-swap" class="btn btn-swap" aria-label="Swap foreground and background colors" title="Swap colors">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 16l-4-4 4-4M17 8l4-4-4-4M21 12H3"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="panel preview-panel" aria-labelledby="preview-title">
+      <h2 id="preview-title" class="panel-title">Live Preview</h2>
+      <div class="preview-frame">
+        <div id="sample-text" class="sample-text" role="img" aria-label="Sample text preview">
+          <span class="sample-heading">PULSE WAVE 2026</span>
+          <span class="sample-body">The premier immersive audio-visual synthesizer festival. Experience three days of cutting-edge electronic music, cyber art installations, and interactive workshops at Tokyo Cyber Dome.</span>
+          <span class="sample-button">GET TICKETS</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel metrics-panel" aria-labelledby="metrics-title">
+      <h2 id="metrics-title" class="panel-title">Contrast Analysis</h2>
+      <div class="metrics-grid">
+        <div class="metric-card ratio-card">
+          <div class="metric-header">
+            <span class="metric-label">Contrast Ratio</span>
+            <strong id="ratio-value" class="metric-value" data-rating="fail">—</strong>
+          </div>
+          <div class="luminance-row">
+            <div class="luminance-item">
+              <span class="luminance-label">FG Luminance</span>
+              <strong id="luminance-fg" class="luminance-value">—</strong>
+            </div>
+            <div class="luminance-item">
+              <span class="luminance-label">BG Luminance</span>
+              <strong id="luminance-bg" class="luminance-value">—</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card compliance-card">
+          <div class="metric-header">
+            <span class="metric-label">WCAG Compliance</span>
+            <div id="compliance-badge" class="compliance-badge fail">
+              <span id="compliance-label" class="compliance-label">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="compliance-chips" role="group" aria-label="WCAG compliance levels">
+        <div id="aa-normal" class="compliance-chip fail">
+          <span class="chip-label">AA Normal (4.5:1)</span>
+          <span class="chip-status">FAIL</span>
+        </div>
+        <div id="aa-large" class="compliance-chip fail">
+          <span class="chip-label">AA Large (3:1)</span>
+          <span class="chip-status">FAIL</span>
+        </div>
+        <div id="aaa-normal" class="compliance-chip fail">
+          <span class="chip-label">AAA Normal (7:1)</span>
+          <span class="chip-status">FAIL</span>
+        </div>
+        <div id="aaa-large" class="compliance-chip fail">
+          <span class="chip-label">AAA Large (4.5:1)</span>
+          <span class="chip-status">FAIL</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel matrix-panel" aria-labelledby="matrix-title">
+      <h2 id="matrix-title" class="panel-title">Palette Contrast Matrix</h2>
+      <p class="matrix-description">All pairwise contrast ratios for the Pulse Wave 2026 palette. Hover cells for exact ratios.</p>
+      <div id="matrix-container" class="matrix-container" role="table" aria-label="Contrast ratio matrix"></div>
+    </section>
+
+    <section class="panel history-panel" aria-labelledby="history-title">
+      <h2 id="history-title" class="panel-title">Contrast History</h2>
+      <div class="history-header">
+        <span>Recent contrast checks</span>
+        <button type="button" id="btn-clear-history" class="btn btn-ghost btn-sm" aria-label="Clear contrast history">Clear</button>
+      </div>
+      <ul id="ratio-history" class="history-list" role="list" aria-label="Contrast check history"></ul>
+    </section>
+  </main>
+
+  <script type="module" src="color-contrast-auditor.js"></script>
+</body>
+</html>
