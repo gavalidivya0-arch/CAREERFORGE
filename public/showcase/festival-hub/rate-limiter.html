@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FestivalHub - Token Bucket Rate Limiter</title>
   <link rel="stylesheet" href="rate-limiter.css">
 </head>
@@ -9,7 +10,68 @@
   <div class="limiter-container">
     <h1>FestivalHub Rate Limiter</h1>
     <p>Token Bucket concurrency & burst throttling engine</p>
+
+    <div class="controls">
+      <label for="token-cost">Token cost:</label>
+      <input type="number" id="token-cost" min="1" max="10" value="1" step="1">
+      <button id="btn-consume" disabled>Consume Tokens</button>
+      <button id="btn-start" disabled>Start Flood Simulator</button>
+      <button id="btn-stop" disabled style="display:none">Stop Flood</button>
+    </div>
+
+    <div class="bucket-visual">
+      <svg class="bucket-svg" viewBox="0 0 200 180" aria-labelledby="bucket-title bucket-desc"><title id="bucket-title">Liquid Bucket Reservoir</title><desc id="bucket-desc">Bucket fill level shows current tokens</desc>
+        <g class="background">
+          <ellipse cx="100" cy="90" rx="90" ry="60" fill="#1e3a5f" stroke="#4a6b8c" stroke-width="2"/>
+          <ellipse cx="100" cy="90" rx="88" ry="56" fill="none" stroke="#6a8caf" stroke-width="1" fill-opacity="0.3"/>
+        </g>
+        <g class="liquid" id="liquid-fill" transform="translate(20, 20)">
+          <rect x="10" y="10" width="160" height="100" rx="8" ry="8" fill="#3b82f6"/>
+          <rect x="10" y="10" width="160" height="100" rx="8" ry="8" fill="none" stroke="#60a5fa" stroke-width="1"/>
+        </g>
+        <g class="tokens">
+          <text x="50" y="40" font-family="ui-monospace, monospace" font-size="14" fill="#93c5fd" text-anchor="middle" id="token-count">10/10</text>
+          <text x="50" y="70" font-family="ui-monospace, monospace" font-size="11" fill="#64748b" text-anchor="middle">capacity</text>
+        </g>
+      </svg>
+      <div class="meter-wrapper">
+        <meter id="fill-meter" min="0" max="10" value="10" labels>Fill Level</meter>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span class="badge badge-pending" id="badge-pending">Pending: 0</span>
+      <span class="badge badge-accepted" id="badge-accepted">Accepted: 0</span>
+      <span class="badge badge-throttled" id="badge-throttled">Throttled: 0</span>
+    </div>
+
+    <div class="event-log" aria-label="Rate-limited event stream">
+      <h3>Event Log</h3>
+      <ol id="event-list" role="list"></ol>
+    </div>
+
+    <div class="telemetry">
+      <h3>Telemetry Metrics</h3>
+      <dl>
+        <dt>Current tokens</dt>
+        <dd id="metric-tokens">10</dd>
+        <dt>Refill rate (/sec)</dt>
+        <dd id="metric-refill">2</dd>
+        <dt>Max concurrent</dt>
+        <dd id="metric-max-concurrent">3</dd>
+        <dt>Max queue</dt>
+        <dd id="metric-max-queue">100</dd>
+        <dt>Accepted</dt>
+        <dd id="metric-accepted">0</dd>
+        <dt>Throttled</dt>
+        <dd id="metric-throttled">0</dd>
+        <dt>Completed</dt>
+        <dd id="metric-completed">0</dd>
+      </dd>
+      </dl>
+    </div>
   </div>
+
   <script type="module" src="rate-limiter.js"></script>
 </body>
 </html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal Smart Contracts - Immutable State Snapshot & Time-Travel</title>
+  <link rel="stylesheet" href="./snapshot-time-travel.css">
+</head>
+<body>
+  <main class="time-travel-container" data-time-travel-lab>
+    <header class="page-header">
+      <a href="index.html" class="back-link">&larr; Back to Legal Smart Contracts</a>
+      <div class="header-badge">CONTRACT-STATE-DEBUGGER v2.4</div>
+      <h1>Immutable State Snapshot &amp; Time-Travel Debugger</h1>
+      <p class="subtitle">Inspect cryptographic state transitions, scrub through immutable escrow milestones, analyze contract storage diffs, and export verified audit histories.</p>
+
+      <!-- Status Bar -->
+      <div class="status-summary-bar">
+        <div class="summary-chip">Snapshot Frame: <strong id="current-frame-val">0 / 0</strong></div>
+        <div class="summary-chip">Current Label: <strong id="current-label-val">Genesis Deployment</strong></div>
+        <div class="summary-chip">Timeline Status: <strong id="playback-status-val">Paused</strong></div>
+        <div class="summary-chip">Recorded History: <strong id="history-count-val">0 Snapshots</strong></div>
+      </div>
+    </header>
+
+    <!-- Timeline Scrubber & Playback Controls Bar -->
+    <section class="scrubber-card">
+      <div class="scrubber-header-row">
+        <h2>Smart Contract Execution Scrubber</h2>
+        <div class="playback-controls">
+          <button id="step-back-btn" class="control-btn" title="Step Back (Undo)">⏮ Undo</button>
+          <button id="play-btn" class="control-btn play-btn" title="Play / Pause Replay">▶ Play Replay</button>
+          <button id="step-fwd-btn" class="control-btn" title="Step Forward (Redo)">⏭ Redo</button>
+          <button id="export-btn" class="control-btn export-btn" title="Export History JSON">💾 Export JSON</button>
+        </div>
+      </div>
+
+      <!-- Scrubber track with tick marks and current frame cursor -->
+      <div class="scrubber-wrapper">
+        <div class="scrubber-track-container">
+          <div id="tick-marks" class="tick-marks" aria-hidden="true"></div>
+          <input id="timeline-slider" type="range" min="0" max="0" value="0" class="timeline-slider">
+        </div>
+        <div class="scrubber-labels">
+          <span id="start-frame-label">Frame #0</span>
+          <span id="current-frame-indicator" class="active-frame-tag">Frame #0</span>
+          <span id="end-frame-label">Frame #0</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="main-split-grid">
+      <!-- Left Column: Contract State Modifier & Snapshot Committer -->
+      <section class="state-control-col">
+        <div class="panel-card">
+          <h2>Contract State Modifier</h2>
+          <form id="state-form" class="state-form">
+            <div class="form-row">
+              <label for="escrow-balance" class="field-label">Escrow Balance (ETH):</label>
+              <input id="escrow-balance" type="number" step="0.1" min="0" value="45.5" class="form-input">
+            </div>
+
+            <div class="form-row">
+              <label for="contract-status" class="field-label">Contract Lifecycle State:</label>
+              <select id="contract-status" class="form-select">
+                <option value="DRAFT">DRAFT (Unsigned)</option>
+                <option value="ACTIVE" selected>ACTIVE (Escrow Locked)</option>
+                <option value="DISPUTED">DISPUTED (Arbitration Pending)</option>
+                <option value="SETTLED">SETTLED (Funds Released)</option>
+                <option value="TERMINATED">TERMINATED (Refunded)</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="required-signatures" class="field-label">Required Multi-Sig Signatures:</label>
+              <input id="required-signatures" type="number" min="1" max="5" value="2" class="form-input">
+            </div>
+
+            <div class="form-row">
+              <label for="arbitrator-approved" class="field-label">Arbitrator Quorum Approval:</label>
+              <select id="arbitrator-approved" class="form-select">
+                <option value="true" selected>Approved (Attested)</option>
+                <option value="false">Pending Approval</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="commit-label" class="field-label">Snapshot Event Label:</label>
+              <input id="commit-label" type="text" value="Milestone 2 Escrow Funding" class="form-input" placeholder="e.g. Arbitration deposit attested">
+            </div>
+
+            <button type="submit" class="primary-btn commit-btn">📸 Commit Immutable Snapshot</button>
+          </form>
+        </div>
+
+        <!-- Current Snapshot Inspector -->
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Current Contract State Snapshot</h2>
+            <span id="snapshot-id-tag" class="meta-tag">snapshot-0</span>
+          </div>
+          <pre id="state-viewer" class="json-viewer"></pre>
+        </div>
+      </section>
+
+      <!-- Right Column: State Diff Inspector -->
+      <section class="diff-inspector-col">
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>State Storage Diff Inspector</h2>
+            <span id="diff-status-badge" class="meta-tag">Diff vs Prior Block</span>
+          </div>
+          <p class="diff-intro">Audit specific cryptographic state changes between block frames with real-time property mutation highlights.</p>
+          <div id="diff-inspector" class="diff-inspector-list">
+            <p class="empty-diff-hint">No earlier snapshot available to diff against. Advance timeline to view contract state mutations.</p>
+          </div>
+        </div>
+
+        <!-- Snapshot History Log Stream -->
+        <div class="panel-card">
+          <div class="card-header-row">
+            <h2>Contract Timeline Index Log</h2>
+            <span id="timeline-count-badge" class="meta-tag">0 Frames</span>
+          </div>
+          <div id="history-frames-list" class="history-frames-list"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./snapshot-time-travel.js"></script>
+</body>
+</html>

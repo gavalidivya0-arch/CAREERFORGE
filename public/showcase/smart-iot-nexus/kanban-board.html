@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart IoT Nexus - Telemetry Task Kanban Board</title>
+  <link rel="stylesheet" href="./kanban-board.css">
+</head>
+<body>
+  <main class="kanban-container">
+    <header class="board-header">
+      <a href="index.html" class="back-link">&larr; Back to Smart IoT Nexus</a>
+      <div class="header-badge">IOT-KANBAN-DISPATCH v2.1</div>
+      <h1>Smart IoT Nexus - Fleet &amp; Telemetry Task Board</h1>
+      <p class="subtitle">Drag task cards between workflow column lanes, reorder device deployments, or manage operational priorities in real time.</p>
+      
+      <div class="toolbar">
+        <button id="open" type="button" class="primary-btn">➕ New Task</button>
+        <span id="saved" class="status-indicator" role="status"></span>
+      </div>
+    </header>
+
+    <!-- Kanban column lanes -->
+    <div id="board" class="kanban-board"></div>
+
+    <!-- New task creation modal -->
+    <dialog id="dialog" class="task-modal" aria-labelledby="dialog-title">
+      <form method="dialog" class="task-form">
+        <h2 id="dialog-title">Create Deployment Task</h2>
+        
+        <label for="title" class="form-label">
+          Task Title
+          <input id="title" class="form-input" required maxlength="120" placeholder="e.g. Firmware patch on Gateway-Alpha">
+        </label>
+        
+        <label for="priority" class="form-label">
+          Priority Level
+          <select id="priority" class="form-select">
+            <option value="low">Low Priority</option>
+            <option value="medium" selected>Medium Priority</option>
+            <option value="high">High Priority</option>
+            <option value="critical">Critical Priority</option>
+          </select>
+        </label>
+        
+        <div class="modal-actions">
+          <button value="add" class="primary-btn">Add Task</button>
+          <button value="cancel" class="cancel-btn" formnovalidate>Cancel</button>
+        </div>
+      </form>
+    </dialog>
+  </main>
+
+  <script type="module" src="./kanban-board.js"></script>
+</body>
+</html>

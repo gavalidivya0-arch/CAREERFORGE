@@ -1,15 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>CulinaryBistro - Resilient WebSocket</title>
-  <link rel="stylesheet" href="websocket-reconnect.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resilient WebSocket — Lumière Bistro</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="websocket-reconnect.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="ws-container">
-    <h1>CulinaryBistro Resilient WebSocket Stream</h1>
-    <p>Heartbeat management & exponential backoff recovery</p>
-  </div>
+  <a href="index.html" class="back-link" aria-label="Back to Lumière Bistro">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    <span>Lumière Bistro</span>
+  </a>
+
+  <main class="ws-page">
+    <header class="page-header">
+      <div class="brand-badge">LUMIÈRE</div>
+      <h1>Resilient WebSocket Stream</h1>
+      <p class="page-subtitle">Kitchen ticket heartbeat supervision · Exponential backoff recovery · Offline order queue</p>
+    </header>
+
+    <section class="panel status-panel" aria-labelledby="status-title">
+      <h2 id="status-title" class="panel-title">Connection State</h2>
+      <div class="status-row">
+        <div id="ws-status-pill" class="status-pill" role="status" aria-live="polite" data-state="DISCONNECTED">
+          <span class="pill-dot" aria-hidden="true"></span>
+          <span id="ws-status-text" class="pill-label">DISCONNECTED</span>
+        </div>
+        <p id="ws-status-hint" class="status-hint">Awaiting connection</p>
+      </div>
+      <div id="ws-outage-banner" class="outage-banner" hidden>
+        <span class="outage-icon" aria-hidden="true">⚠</span>
+        <span>Network outage simulated — connect will fail until restored</span>
+        <button type="button" id="btn-outage" class="btn btn-outage" aria-pressed="false">Restore Link</button>
+      </div>
+    </section>
+
+    <section class="panel controls-panel" aria-labelledby="controls-title">
+      <h2 id="controls-title" class="panel-title">Connection Controls</h2>
+      <div class="btn-group">
+        <button type="button" id="btn-connect" class="btn btn-connect" aria-label="Toggle connection">Connect</button>
+        <button type="button" id="btn-drop" class="btn btn-drop" aria-label="Simulate connection drop">Simulate Drop</button>
+      </div>
+    </section>
+
+    <section class="panel metrics-panel" aria-labelledby="metrics-title">
+      <h2 id="metrics-title" class="panel-title">Live Telemetry</h2>
+      <div class="metric-grid">
+        <div class="metric-card">
+          <span class="metric-label">Reconnect</span>
+          <strong id="metric-attempt" class="metric-value">0/4</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Next Retry</span>
+          <strong id="metric-retry" class="metric-value">—</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Latency</span>
+          <strong id="metric-latency" class="metric-value">—</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Queued</span>
+          <strong id="metric-queue" class="metric-value">0</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Delivered</span>
+          <strong id="metric-delivered" class="metric-value">0</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Heartbeats</span>
+          <strong id="metric-heartbeat" class="metric-value">0/0</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel heartbeat-panel" aria-labelledby="heartbeat-title">
+      <h2 id="heartbeat-title" class="panel-title">Heartbeat Monitor</h2>
+      <div class="heartbeat-display">
+        <div class="heartbeat-pulse" aria-hidden="true">
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring"></div>
+          <div class="pulse-core"></div>
+        </div>
+        <div class="heartbeat-info">
+          <strong id="heartbeat-label" class="heartbeat-label">Idle</strong>
+          <span id="heartbeat-sub" class="heartbeat-sub">Heartbeat starts when the stream opens</span>
+          <div class="heartbeat-counts">
+            <span class="count-label">Acked / Sent</span>
+            <strong id="heartbeat-counts">0 / 0</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel backoff-panel" aria-labelledby="backoff-title">
+      <h2 id="backoff-title" class="panel-title">Exponential Backoff Schedule</h2>
+      <div id="retry-track" class="retry-track" data-active="false">
+        <div class="retry-header">
+          <strong id="retry-label" class="retry-label">Idle</strong>
+          <strong id="retry-countdown" class="retry-countdown">—</strong>
+        </div>
+        <div id="backoff-chart" class="backoff-chart" role="list" aria-label="Backoff attempts"></div>
+      </div>
+    </section>
+
+    <section class="panel composer-panel" aria-labelledby="composer-title">
+      <h2 id="composer-title" class="panel-title">Message Composer</h2>
+      <form id="message-form" class="composer-form">
+        <input type="text" id="message-input" class="composer-input" placeholder="Type a kitchen ticket or JSON payload…" aria-label="Message payload">
+        <div class="composer-actions">
+          <button type="submit" class="btn btn-send" id="btn-send">Send</button>
+          <button type="button" class="btn btn-quick" id="btn-quick">Quick Ticket</button>
+          <button type="button" class="btn btn-burst" id="btn-burst">Burst ×5</button>
+        </div>
+      </form>
+      <p id="composer-status" class="composer-status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel queue-panel" aria-labelledby="queue-title">
+      <h2 id="queue-title" class="panel-title">Offline Message Queue <span id="metric-queue-badge" class="queue-badge">0</span></h2>
+      <ul id="queue-list" class="message-log" role="list" aria-label="Queued messages"></ul>
+    </section>
+
+    <section class="panel delivered-panel" aria-labelledby="delivered-title">
+      <h2 id="delivered-title" class="panel-title">Delivered Messages <span id="metric-delivered-badge" class="queue-badge">0</span></h2>
+      <ul id="delivered-list" class="message-log" role="list" aria-label="Delivered messages"></ul>
+    </section>
+
+    <section class="panel timeline-panel" aria-labelledby="timeline-title">
+      <h2 id="timeline-title" class="panel-title">Connection Timeline</h2>
+      <ul id="ws-timeline" class="timeline" role="list" aria-label="Connection events"></ul>
+    </section>
+  </main>
+
   <script type="module" src="websocket-reconnect.js"></script>
 </body>
 </html>

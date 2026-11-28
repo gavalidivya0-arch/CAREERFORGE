@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Merkle tree data integrity and cryptographic proof verification engine." />
+    <title>DeFi Yield Matrix - Merkle Verifier</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="merkle-verifier.css" />
+    <script type="module" src="merkle-verifier.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#sandbox">Skip to merkle verifier</a>
+    <header>
+      <a class="brand" href="index.html">DeFi Yield Matrix</a>
+      <span>Merkle Verifier</span>
+      <a href="index.html">Back to showcase</a>
+    </header>
+    <main id="sandbox">
+      <div class="intro">
+        <h1>Data Integrity Verification</h1>
+        <p>Calculate SHA-256 leaf hashes, build balanced binary hash trees, generate cryptographic audit paths, and verify inclusion proofs.</p>
+      </div>
+      <div class="workspace">
+        <section class="data-input" aria-labelledby="data-title">
+          <h2 id="data-title">Dataset Input</h2>
+          <p class="hint">Enter comma-separated values (numbers or strings)</p>
+          <div class="input-group">
+            <input id="data-values" type="text" placeholder="e.g. 10,20,30,40,50" aria-label="Dataset values" />
+            <button id="build-tree" type="button" class="primary-button">Build Tree</button>
+          </div>
+          <div id="tree-error" class="error" role="alert" hidden></div>
+        </section>
+        <section class="tree-visualizer" aria-labelledby="tree-title">
+          <h2 id="tree-tree-title">Tree Structure</h2>
+          <div class="tree-container" id="tree-container">
+            <em>Build a tree to visualize</em>
+          </div>
+          <div class="tree-metrics">
+            <div class="metric">
+              <span>Tree Depth:</span>
+              <span id="tree-depth">—</span>
+            </div>
+            <div class="metric">
+              <span>Leaf Count:</span>
+              <span id="leaf-count">—</span>
+            </div>
+            <div class="metric">
+              <span>Root Hash:</span>
+              <span id="root-hash">—</span>
+            </div>
+          </div>
+        </section>
+        <section class="proof-verification" aria-labelledby="proof-title">
+          <h2 id="proof-title">Proof Verification</h2>
+          <div class="input-group">
+            <label for="proof-index">Prove Index:</label>
+            <input id="proof-index" type="number" min="0" step="1" aria-label="Proof index" />
+            <button id="generate-proof" type="button" class="secondary-button">Generate Proof</button>
+          </div>
+          <div id="proof-error" class="error" role="alert" hidden></div>
+          <div id="proof-result" hidden>
+            <div class="pills">
+              <span class="pill pill-root">Root Hash: <span id="proof-root">—</span></span>
+              <span class="pill pill-verified" id="proof-status">—</span>
+            </div>
+            <div class="proof-path">
+              <span>Audit Path (sibling hashes):</span>
+              <ol id="proof-list"></ol>
+            </div>
+          </div>
+        </section>
+        <section class="tamper-simulation" aria-labelledby="tamper-title">
+          <h2 id="tamper-title">Tamper Simulation</h2>
+          <p>Verify detection of modified data by altering a leaf value.</p>
+          <div class="input-group">
+            <label for="tamper-index">Tamper Index:</label>
+            <input id="tamper-index" type="number" min="0" step="1" aria-label="Tamper index" />
+            <button id="tamper-leaf" type="button" class="secondary-button">Tamper & Verify</button>
+          </div>
+          <div id="tamper-result" hidden>
+            <div class="pills">
+              <span class="pill pill-root">Root Hash: <span id="tamper-root">—</span></span>
+              <span class="pill pill-tampered" id="tamper-status">—</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+    <footer>DeFi Yield Matrix merkle verifier · CAREERFORGE showcase</footer>
+  </body>
+</html>

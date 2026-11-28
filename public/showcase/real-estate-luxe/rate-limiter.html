@@ -1,15 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>RealEstateLuxe - Token Bucket Rate Limiter</title>
-  <link rel="stylesheet" href="rate-limiter.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rate Limiter — Vanguard Estates</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="rate-limiter.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="limiter-container">
-    <h1>RealEstateLuxe Rate Limiter</h1>
-    <p>Token Bucket concurrency & burst throttling engine</p>
-  </div>
+  <a href="index.html" class="back-link" aria-label="Back to Vanguard Estates">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    <span>Vanguard Estates</span>
+  </a>
+
+  <main class="rate-limiter-page">
+    <header class="page-header">
+      <div class="brand-badge">VANGUARD</div>
+      <h1>Token Bucket Rate Limiter</h1>
+      <p class="page-subtitle">Admission control for exclusive property viewings — burst capacity, priority lanes, and real-time telemetry.</p>
+    </header>
+
+    <section class="panel status-panel" aria-labelledby="status-title">
+      <h2 id="status-title" class="panel-title">Admission Gate</h2>
+      <div class="status-row">
+        <div id="rate-status-pill" class="status-pill" role="status" aria-live="polite" data-state="open">
+          <span class="pill-dot" aria-hidden="true"></span>
+          <span id="rate-status-text" class="pill-label">Gate open</span>
+        </div>
+        <p id="rate-status-hint" class="status-hint">Admission flowing</p>
+      </div>
+    </section>
+
+    <section class="panel reservoir-panel" aria-labelledby="reservoir-title">
+      <h2 id="reservoir-title" class="panel-title">Token Reservoir</h2>
+      <div class="bucket-meter-wrap">
+        <div id="bucket-meter" class="bucket-meter" role="progressbar" aria-valuemin="0" aria-valuemax="10" aria-valuenow="10" aria-label="Available tokens">
+          <div id="bucket-fill" class="bucket-fill" style="--fill: 1"></div>
+          <div class="bucket-tick-marks" aria-hidden="true"></div>
+        </div>
+        <div class="bucket-readout">
+          <div class="readout-item">
+            <span class="readout-label">Available</span>
+            <strong id="bucket-value" class="readout-value">10</strong>
+            <span class="readout-unit">tokens</span>
+          </div>
+          <div class="readout-divider" aria-hidden="true"></div>
+          <div class="readout-item">
+            <span class="readout-label">Capacity</span>
+            <strong id="bucket-max" class="readout-value">10</strong>
+            <span class="readout-unit">tokens</span>
+          </div>
+          <div class="readout-divider" aria-hidden="true"></div>
+          <div class="readout-item">
+            <span class="readout-label">Refill</span>
+            <strong id="bucket-rate" class="readout-value">2</strong>
+            <span class="readout-unit">/s</span>
+          </div>
+          <div class="readout-divider" aria-hidden="true"></div>
+          <div class="readout-item">
+            <span class="readout-label">Next token</span>
+            <strong id="bucket-next" class="readout-value">ready</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel controls-panel" aria-labelledby="controls-title">
+      <h2 id="controls-title" class="panel-title">Request Simulators</h2>
+      <div class="btn-group">
+        <button type="button" id="btn-flood-10" class="btn btn-flood">Flood ×10</button>
+        <button type="button" id="btn-flood-25" class="btn btn-flood">Flood ×25</button>
+        <button type="button" id="btn-vip" class="btn btn-vip">VIP Request</button>
+        <button type="button" id="btn-direct" class="btn btn-direct">Direct Admit</button>
+        <button type="button" id="btn-drain" class="btn btn-drain">Drain Bucket</button>
+        <button type="button" id="btn-reset" class="btn btn-reset">Reset Engine</button>
+      </div>
+    </section>
+
+    <section class="panel metrics-panel" aria-labelledby="metrics-title">
+      <h2 id="metrics-title" class="panel-title">Telemetry</h2>
+      <div class="metric-grid">
+        <div class="metric-card">
+          <span class="metric-label">Accepted</span>
+          <strong id="metric-accepted" class="metric-value">0</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Throttled</span>
+          <strong id="metric-throttled" class="metric-value">0</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Active</span>
+          <strong id="metric-active" class="metric-value">0/3</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Queued</span>
+          <strong id="metric-queue" class="metric-value">0</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Completed</span>
+          <strong id="metric-completed" class="metric-value">0</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Consumed</span>
+          <strong id="metric-consumed" class="metric-value">0</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel lanes-panel" aria-labelledby="lanes-title">
+      <h2 id="lanes-title" class="panel-title">Concurrency Lanes</h2>
+      <div class="lanes-header">
+        <span>Active Lanes</span>
+        <strong id="active-count" class="lane-count">0/3</strong>
+      </div>
+      <div id="active-lanes" class="lane-grid" role="list" aria-label="Concurrency lanes"></div>
+    </section>
+
+    <section class="panel queue-panel" aria-labelledby="queue-title">
+      <h2 id="queue-title" class="panel-title">Wait Queue</h2>
+      <div class="queue-header">
+        <span>Waiting Requests</span>
+        <strong id="queue-count" class="queue-count">0</strong>
+      </div>
+      <ul id="queue-list" class="queue-list" role="list" aria-label="Queued requests"></ul>
+    </section>
+
+    <section class="panel log-panel" aria-labelledby="log-title">
+      <h2 id="log-title" class="panel-title">Event Stream</h2>
+      <div class="log-header">
+        <span>Live Log</span>
+        <strong id="log-count" class="log-count">0 events</strong>
+        <button type="button" id="btn-clear-log" class="btn btn-ghost btn-sm" aria-label="Clear event log">Clear</button>
+      </div>
+      <ul id="event-log" class="event-log" role="log" aria-live="polite" aria-label="Rate limiter events"></ul>
+    </section>
+
+    <section class="panel config-panel" aria-labelledby="config-title">
+      <h2 id="config-title" class="panel-title">Engine Configuration</h2>
+      <div class="config-grid">
+        <label class="config-control">
+          <span class="config-label">Capacity</span>
+          <div class="config-input-wrap">
+            <input type="range" id="config-capacity" min="1" max="100" value="10" aria-label="Token capacity">
+            <output id="out-capacity" for="config-capacity">10 tokens</output>
+          </div>
+        </label>
+        <label class="config-control">
+          <span class="config-label">Refill Rate</span>
+          <div class="config-input-wrap">
+            <input type="range" id="config-refill" min="1" max="100" value="2" aria-label="Tokens per second">
+            <output id="out-refill" for="config-refill">2/s</output>
+          </div>
+        </label>
+        <label class="config-control">
+          <span class="config-label">Concurrency</span>
+          <div class="config-input-wrap">
+            <input type="range" id="config-concurrency" min="1" max="20" value="3" aria-label="Max concurrent requests">
+            <output id="out-concurrency" for="config-concurrency">3 lanes</output>
+          </div>
+        </label>
+        <label class="config-control">
+          <span class="config-label">Queue Limit</span>
+          <div class="config-input-wrap">
+            <input type="range" id="config-queue" min="1" max="100" value="12" aria-label="Max queued requests">
+            <output id="out-queue" for="config-queue">12 slots</output>
+          </div>
+        </label>
+      </div>
+    </section>
+  </main>
+
   <script type="module" src="rate-limiter.js"></script>
 </body>
 </html>

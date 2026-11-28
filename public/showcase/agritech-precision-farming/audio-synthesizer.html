@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agritech Precision Farming - Audio Alert Synthesizer</title>
+  <link rel="stylesheet" href="audio-synthesizer.css">
+</head>
+<body>
+  <main>
+    <a href="index.html" class="back-link">&larr; Back to Agritech Precision Farming</a>
+    <div class="header-badge">AGRITECH AUDIO CONSOLE v2.1</div>
+    <h1>Audio Alert Synthesizer</h1>
+    <p class="subtitle">Programmatic Web Audio chime engine for telemetry broadcasts, valve toggles, sensor warnings, and harvest alerts without audio file dependencies.</p>
+
+    <!-- Audio volume and mute control panel -->
+    <section class="controls" aria-label="Audio Output Controls">
+      <label for="volume">Volume</label>
+      <input id="volume" type="range" min="0" max="100" value="50" aria-label="Volume slider">
+      <output id="level" for="volume">50%</output>
+      <label class="switch"><input id="mute" type="checkbox" role="switch"> Mute</label>
+    </section>
+
+    <!-- Soundboard preview buttons -->
+    <section class="board" aria-label="Soundboard Previews">
+      <button type="button" data-sound="click">
+        <span class="btn-icon">🚰</span>
+        <span class="btn-text">Valve Actuation (Click)</span>
+      </button>
+      <button type="button" data-sound="navigation">
+        <span class="btn-icon">📡</span>
+        <span class="btn-text">Telemetry Sweep (Sweep)</span>
+      </button>
+      <button type="button" data-sound="success">
+        <span class="btn-icon">🌾</span>
+        <span class="btn-text">Harvest Complete (Chime)</span>
+      </button>
+      <button type="button" data-sound="warning">
+        <span class="btn-icon">⚠️</span>
+        <span class="btn-text">Moisture Alert (Warning)</span>
+      </button>
+      <button type="button" data-sound="error">
+        <span class="btn-icon">🚨</span>
+        <span class="btn-text">Pump Failure (Buzzer)</span>
+      </button>
+    </section>
+
+    <!-- Pulsating sound wave animations -->
+    <div id="wave" class="wave" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+
+    <!-- Frequency oscilloscope visualizer -->
+    <section class="oscilloscope-container" aria-label="Oscilloscope Frequency Scope">
+      <canvas id="scope" width="640" height="160" role="img" aria-label="Frequency oscilloscope visualizer trace"></canvas>
+    </section>
+
+    <p id="status" class="status-msg" role="status">Choose an agricultural alert sound to preview.</p>
+  </main>
+
+  <script type="module" src="audio-synthesizer.js"></script>
+</body>
+</html>

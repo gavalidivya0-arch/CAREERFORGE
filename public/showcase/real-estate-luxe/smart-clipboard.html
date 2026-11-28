@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vanguard Clipboard History</title>
+  <link rel="stylesheet" href="smart-clipboard.css">
+</head>
+<body>
+  <main>
+    <a href="index.html">&larr; Back to Vanguard</a>
+    <h1>Clipboard history</h1>
+    <p>Text you copy on this page is kept here until you reload. Nothing is saved or sent anywhere.</p>
+    <button type="button" id="trigger" aria-expanded="false" aria-controls="drawer">Open history (<span id="count">0</span>)</button>
+    <h2>Try copying these</h2>
+    <p>This penthouse has a private terrace facing the bay.</p>
+    <p>$4,250,000</p>
+    <p>https://example.com/estates/harbour-penthouse</p>
+  </main>
+  <aside id="drawer" aria-label="Clipboard history" inert>
+    <header><h2>History</h2><button type="button" id="close">Close</button></header>
+    <input id="search" type="search" placeholder="Search snippets" aria-label="Search snippets">
+    <div class="chips" role="group" aria-label="Filter by format">
+      <button type="button" data-type="all" aria-pressed="true">All</button>
+      <button type="button" data-type="text" aria-pressed="false">Text</button>
+      <button type="button" data-type="code" aria-pressed="false">Code</button>
+      <button type="button" data-type="link" aria-pressed="false">Links</button>
+      <button type="button" data-type="price" aria-pressed="false">Prices</button>
+    </div>
+    <p id="status" role="status"></p>
+    <ul id="history"></ul>
+    <button type="button" id="clear">Clear history</button>
+  </aside>
+  <script type="module" src="smart-clipboard.js"></script>
+</body>
+</html>

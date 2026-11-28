@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Adoption Haven - Binary Heap Priority Event Queue</title>
+  <link rel="stylesheet" href="./priority-queue.css">
+</head>
+<body>
+  <main class="queue-container" data-queue-lab>
+    <header class="queue-header">
+      <a href="index.html" class="back-link">&larr; Back to Pet Adoption Haven</a>
+      <div class="header-badge">SHELTER-HEAP-PACER v2.4</div>
+      <h1>Binary Heap Priority Event Queue &amp; Dispatcher</h1>
+      <p class="subtitle">Asynchronous rate-controlled backpressure dispatcher for emergency veterinary intake, adoption applications, foster matches, and shelter triage.</p>
+      
+      <!-- Metrics & depth status bar -->
+      <div class="status-summary-bar">
+        <div class="summary-chip">Queue Depth: <strong id="depth-val">0</strong></div>
+        <div class="summary-chip">Top Priority: <strong id="top-priority-val">None</strong></div>
+        <div class="summary-chip">Dispatched: <strong id="dispatched-count-val">0</strong></div>
+        <div class="summary-chip">Dispatcher Status: <strong id="dispatcher-status-val">Active</strong></div>
+      </div>
+    </header>
+
+    <div class="main-layout-grid">
+      <!-- Left Column: Enqueue Form & Dispatch Controls -->
+      <section class="control-panel">
+        <div class="panel-card">
+          <h2>Enqueue Shelter Task</h2>
+          <form id="enqueue-form" class="enqueue-form">
+            <label for="task-payload" class="field-label">Event Payload / Shelter Incident:</label>
+            <input id="task-payload" class="form-input" required placeholder="e.g. Emergency Medical Triage: Golden Retriever Injured" value="Emergency Rescue: Abandoned Puppy Litter - Immediate Shelter Intake">
+
+            <div class="form-row">
+              <div class="form-col">
+                <label for="priority-rank" class="field-label">Priority Rank:</label>
+                <select id="priority-rank" class="form-select">
+                  <option value="4" selected>Urgent (Level 4)</option>
+                  <option value="3">High (Level 3)</option>
+                  <option value="2">Normal (Level 2)</option>
+                  <option value="1">Low (Level 1)</option>
+                </select>
+              </div>
+
+              <div class="form-col">
+                <label for="preset-select" class="field-label">Quick Shelter Presets:</label>
+                <select id="preset-select" class="form-select">
+                  <option value="" disabled selected>Select preset...</option>
+                  <option value="Emergency Vet Surgery: Critical Blood Transfusion Required|4">Emergency Vet Triage (Urgent)</option>
+                  <option value="Fast-Track Adoption Match: Senior Dog 'Barnaby'|3">Urgent Adoption Final Review (High)</option>
+                  <option value="Routine Core Vaccination & Deworming: Kennel 12|2">Vaccination &amp; Checkup (Normal)</option>
+                  <option value="Weekly Playtime & Grooming Photo Session: Cats|1">Shelter Photo Update (Low)</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="primary-btn enqueue-btn">➕ Enqueue Task to Binary Heap</button>
+          </form>
+        </div>
+
+        <!-- Live Queue Depth Gauge & Rate Controls -->
+        <div class="panel-card">
+          <h2>Queue Depth &amp; Dispatcher Rate</h2>
+          
+          <div class="gauge-section">
+            <div class="gauge-header">
+              <span>Heap Capacity / Depth Gauge:</span>
+              <span id="gauge-percent">0%</span>
+            </div>
+            <div class="progress-bar-track">
+              <div id="depth-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="rate-control-section">
+            <div class="slider-label-row">
+              <label for="rate-slider">Dispatch Rate Pacing:</label>
+              <span id="rate-slider-val" class="rate-badge">500 ms / event</span>
+            </div>
+            <input id="rate-slider" type="range" min="150" max="2500" step="50" value="500" class="rate-slider">
+            <div class="slider-ticks">
+              <span>Fast (150ms)</span>
+              <span>Balanced (500ms)</span>
+              <span>Slow (2.5s)</span>
+            </div>
+          </div>
+
+          <div class="dispatcher-action-btns">
+            <button id="toggle-dispatch-btn" type="button" class="toggle-btn active-state">⏸ Pause Dispatcher</button>
+            <button id="dequeue-manual-btn" type="button" class="secondary-btn">⚡ Manual Dequeue</button>
+            <button id="clear-queue-btn" type="button" class="danger-btn">🗑 Clear All</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Live Heap Visualizer & Processed Event Feed -->
+      <section class="display-panel">
+        <!-- Heap Queue Inspection Card -->
+        <div class="panel-card">
+          <div class="card-title-row">
+            <h2>Pending Priority Heap Array</h2>
+            <span id="heap-nodes-count" class="meta-tag">0 queued</span>
+          </div>
+          <div id="heap-nodes-list" class="heap-nodes-list">
+            <p class="empty-hint">Queue is currently empty. Add shelter tasks to inspect the binary heap ordering.</p>
+          </div>
+        </div>
+
+        <!-- Processed Event Feed -->
+        <div class="panel-card">
+          <div class="card-title-row">
+            <h2>Processed Event Feed (Dispatched Stream)</h2>
+            <span id="feed-count" class="meta-tag">0 processed</span>
+          </div>
+          <div id="event-feed" class="event-feed-list">
+            <p class="empty-hint">Dispatched events will appear here in prioritized order.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="./priority-queue.js"></script>
+</body>
+</html>

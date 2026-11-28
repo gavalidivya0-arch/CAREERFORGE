@@ -1,0 +1,476 @@
+/**
+ * Agritech Precision Farming - Binary Heap Priority Event Queue Styling
+ */
+
+:root {
+  --agri-bg: #090a0f;
+  --agri-card: #121622;
+  --agri-card-light: #1b2133;
+  --agri-border: rgba(255, 255, 255, 0.1);
+  --agri-accent: #15803d;
+  --agri-emerald: #10b981;
+  --agri-emerald-glow: rgba(16, 185, 129, 0.45);
+  --agri-urgent: #ef4444;
+  --agri-high: #f97316;
+  --agri-normal: #10b981;
+  --agri-low: #38bdf8;
+  --agri-text: #f8fafc;
+  --agri-muted: #94a3b8;
+  --agri-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --agri-mono: 'JetBrains Mono', 'Fira Code', 'Segoe UI Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--agri-bg);
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(21, 128, 61, 0.15), transparent),
+    radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.03), transparent);
+  color: var(--agri-text);
+  font-family: var(--agri-font);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.queue-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 32px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.queue-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 2px solid var(--agri-border);
+  padding-bottom: 18px;
+}
+
+.back-link {
+  color: var(--agri-emerald);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  align-self: flex-start;
+  transition: opacity 0.2s;
+}
+
+.back-link:hover {
+  opacity: 0.85;
+}
+
+.header-badge {
+  align-self: flex-start;
+  padding: 4px 10px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid var(--agri-emerald);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--agri-mono);
+  color: var(--agri-emerald);
+  letter-spacing: 0.5px;
+}
+
+.queue-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.subtitle {
+  color: var(--agri-muted);
+  font-size: 0.94rem;
+}
+
+.status-summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.summary-chip {
+  padding: 6px 14px;
+  background: var(--agri-card);
+  border: 1px solid var(--agri-border);
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  color: var(--agri-muted);
+}
+
+.summary-chip strong {
+  color: #ffffff;
+  font-family: var(--agri-mono);
+}
+
+/* Grid Layout */
+.main-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .main-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.control-panel,
+.display-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-card {
+  background: var(--agri-card);
+  border: 1px solid var(--agri-border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel-card h2 {
+  font-size: 1.12rem;
+  color: #ffffff;
+}
+
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meta-tag {
+  font-size: 0.76rem;
+  font-family: var(--agri-mono);
+  color: var(--agri-muted);
+  background: var(--agri-card-light);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* Form Styling */
+.enqueue-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.form-input,
+.form-select {
+  padding: 10px 14px;
+  background: #090c15;
+  border: 1px solid var(--agri-border);
+  border-radius: 8px;
+  color: var(--agri-text);
+  font-family: var(--agri-font);
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--agri-emerald);
+  box-shadow: 0 0 0 2px var(--agri-emerald-glow);
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #15803d, #16a34a);
+  color: #ffffff;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 18px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.primary-btn:hover {
+  opacity: 0.92;
+}
+
+.primary-btn:active {
+  transform: scale(0.99);
+}
+
+/* Gauge Section & Progress Bar */
+.gauge-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gauge-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  color: var(--agri-muted);
+  font-family: var(--agri-mono);
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 10px;
+  background: #090c15;
+  border: 1px solid var(--agri-border);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+/* Rate Control Section */
+.rate-control-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--agri-card-light);
+  border-radius: 8px;
+  border: 1px solid var(--agri-border);
+}
+
+.slider-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.84rem;
+  color: var(--agri-muted);
+}
+
+.rate-badge {
+  font-family: var(--agri-mono);
+  font-weight: 700;
+  color: var(--agri-emerald);
+}
+
+.rate-slider {
+  width: 100%;
+  accent-color: var(--agri-emerald);
+  cursor: pointer;
+}
+
+.slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--agri-muted);
+}
+
+/* Dispatcher action buttons */
+.dispatcher-action-btns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 9px 14px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid var(--agri-emerald);
+  border-radius: 6px;
+  color: #34d399;
+  font-weight: 600;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.toggle-btn.paused-state {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+
+.secondary-btn {
+  padding: 9px 14px;
+  background: var(--agri-card-light);
+  border: 1px solid var(--agri-border);
+  border-radius: 6px;
+  color: var(--agri-text);
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.danger-btn {
+  padding: 9px 14px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+/* Priority badge indicators */
+.priority-badge {
+  font-family: var(--agri-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.badge-urgent {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+}
+
+.badge-high {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+  border: 1px solid #f97316;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.25);
+}
+
+.badge-normal {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid #10b981;
+}
+
+.badge-low {
+  background: rgba(56, 189, 248, 0.2);
+  color: #7dd3fc;
+  border: 1px solid #38bdf8;
+}
+
+/* Heap Array List */
+.heap-nodes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.heap-node-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #0d101b;
+  border: 1px solid var(--agri-border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.node-idx {
+  font-family: var(--agri-mono);
+  font-size: 0.75rem;
+  color: var(--agri-muted);
+  margin-right: 8px;
+}
+
+.node-title {
+  color: #ffffff;
+  font-weight: 500;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 12px;
+}
+
+/* Event Feed Transition Cards */
+.event-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.event-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #141824;
+  border: 1px solid var(--agri-border);
+  border-left: 4px solid var(--agri-emerald);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  animation: feed-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes feed-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.event-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.event-timestamp {
+  font-family: var(--agri-mono);
+  font-size: 0.74rem;
+  color: var(--agri-muted);
+}
+
+.event-payload {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.empty-hint {
+  color: var(--agri-muted);
+  font-style: italic;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 16px;
+}

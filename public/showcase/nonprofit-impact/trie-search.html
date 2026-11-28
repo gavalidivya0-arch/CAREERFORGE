@@ -3,146 +3,324 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nonprofit Impact — Trie Typeahead &amp; Spell Distance Engine</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%8C%B1%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="./trie-search.css" />
+  <title>Nonprofit Impact — Trie Typeahead Autocomplete</title>
+  <link rel="stylesheet" href="trie-search.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
-<body class="nonprofit-trie-theme">
-  <a class="back-link" href="./index.html">← TerraInitia</a>
-
-  <main class="trie-shell">
-    <header class="trie-hero">
-      <p class="eyebrow">🌱 Nonprofit Impact · Core Engine</p>
-      <h1>Prefix Tree Typeahead &amp; Spell Distance</h1>
-      <p class="lede">
-        An in-memory trie indexes every climate programme. Prefix lookups walk shared edges,
-        while a trie-pruned Levenshtein pass surfaces spelling neighbours without scanning the lexicon.
-      </p>
-      <ul class="engine-pills" aria-label="Engine properties">
-        <li>O(prefix) completion</li>
-        <li>Code-point safe</li>
-        <li>Bounded 2,000 terms</li>
-      </ul>
-    </header>
-
-    <section class="panel search-panel" aria-labelledby="search-heading">
-      <div class="panel-head">
-        <div>
-          <h2 id="search-heading">Instant typeahead</h2>
-          <p class="panel-sub">Type a fragment to walk the trie, or misspell it to test edit distance.</p>
-        </div>
-        <label class="distance-control" for="edit-distance">
-          Fuzzy distance
-          <select id="edit-distance">
-            <option value="0">0 · exact</option>
-            <option value="1">1 edit</option>
-            <option value="2" selected>2 edits</option>
-            <option value="3">3 edits</option>
-          </select>
-        </label>
+<body>
+  <main class="trie-search-main">
+    <div class="trie-search-wrapper">
+      <!-- Search Input -->
+      <div class="trie-search-box">
+        <span class="trie-search-icon" aria-hidden="true">🔍</span>
+        <input type="search" id="trie-search-input" placeholder="Search causes, projects, or initiatives..." aria-label="Type to search nonprofit causes" autocomplete="off" />
+        <span class="trie-search-clear" id="trie-search-clear" aria-label="Clear search" hidden>✕</span>
       </div>
 
-      <div class="search-field">
-        <span class="search-icon" aria-hidden="true">🔎</span>
-        <input
-          id="term-search"
-          type="text"
-          role="combobox"
-          aria-expanded="false"
-          aria-controls="suggestions"
-          aria-autocomplete="list"
-          aria-describedby="search-status"
-          autocomplete="off"
-          spellcheck="false"
-          placeholder="Try “water”, “forest”, “solar”…"
-        />
-        <span class="key-hint" aria-hidden="true">↑ ↓ ↵</span>
-      </div>
-
-      <ul id="suggestions" class="suggestions" role="listbox" aria-label="Prefix completions" hidden></ul>
-      <p id="search-status" class="search-status" aria-live="polite">Booting the trie…</p>
-
-      <div class="fuzzy-block">
-        <h3>Did you mean?</h3>
-        <div id="fuzzy-list" class="fuzzy-list"></div>
-      </div>
-    </section>
-
-    <section class="metrics" aria-label="Search telemetry">
-      <article class="metric">
-        <span class="metric-label">Indexed terms</span>
-        <strong id="metric-terms">0</strong>
-        <span class="metric-foot">lexicon size</span>
-      </article>
-      <article class="metric">
-        <span class="metric-label">Trie nodes</span>
-        <strong id="metric-nodes">0</strong>
-        <span class="metric-foot">shared edges</span>
-      </article>
-      <article class="metric">
-        <span class="metric-label">Prefix hits</span>
-        <strong id="metric-prefix">0</strong>
-        <span class="metric-foot">completions served</span>
-      </article>
-      <article class="metric">
-        <span class="metric-label">Fuzzy hits</span>
-        <strong id="metric-fuzzy">0</strong>
-        <span class="metric-foot">suggestions served</span>
-      </article>
-      <article class="metric metric-wide">
-        <span class="metric-label">Last lookup</span>
-        <strong id="metric-time">0.00 ms</strong>
-        <span class="metric-foot">prefix + fuzzy pass</span>
-      </article>
-    </section>
-
-    <div class="workspace">
-      <section class="panel lexicon-panel" aria-labelledby="lexicon-heading">
-        <div class="panel-head">
-          <div>
-            <h2 id="lexicon-heading">Lexicon</h2>
-            <p class="panel-sub">Insert terms without rebuilding the index.</p>
-          </div>
-          <button type="button" id="reset-lexicon" class="ghost-button">Restore starters</button>
-        </div>
-
-        <form id="add-term-form" class="add-form">
-          <label class="sr-only" for="new-term">New programme term</label>
-          <input id="new-term" type="text" maxlength="64" placeholder="e.g. Water Wells" autocomplete="off" />
-          <button type="submit">Index term</button>
-        </form>
-        <p id="lexicon-status" class="lexicon-status" aria-live="polite"></p>
-
-        <ul id="lexicon-list" class="lexicon-list" aria-label="Indexed terms"></ul>
-      </section>
-
-      <section class="panel tree-panel" aria-labelledby="tree-heading">
-        <div class="panel-head">
-          <div>
-            <h2 id="tree-heading">Prefix subtree</h2>
-            <p id="tree-caption" class="panel-sub">Live projection · whole lexicon</p>
-          </div>
-        </div>
-        <div id="trie-tree" class="trie-tree"></div>
-      </section>
+      <!-- Auto-suggest Dropdown -->
+      <div class="trie-suggestions" role="listbox" id="trie-suggestions" aria-label="Auto-suggest results" hidden></div>
     </div>
 
-    <section class="panel log-panel" aria-labelledby="log-heading">
-      <div class="panel-head">
-        <div>
-          <h2 id="log-heading">Engine event log</h2>
-          <p class="panel-sub">Newest first · capped at 60 entries.</p>
+    <!-- Trie Hierarchy Tree Viewer -->
+    <section class="trie-tree-viewer" aria-labelledby="trie-tree-title">
+      <h2 id="trie-tree-title">Trie Prefix Tree Hierarchy</h2>
+      <p class="trie-tree-description">Visualizing the prefix tree structure with highlighted matches</p>
+      <div class="trie-tree-container" id="trie-tree-container">
+        <svg class="trie-svg" aria-hidden="true" viewBox="0 0 800 600">
+          <!-- Tree nodes and edges will be rendered by JavaScript -->
+        </svg>
+        <div class="trie-empty-state" hidden>
+          <p>Start typing to build the trie hierarchy</p>
         </div>
-        <button type="button" id="clear-log" class="ghost-button">Clear log</button>
       </div>
-      <ol id="event-log" class="event-log" aria-live="polite"></ol>
     </section>
-
-    <footer class="trie-footer">
-      <p>Client-side only · no network calls · <a href="./index.html">Back to the impact dashboard</a></p>
-    </footer>
   </main>
 
-  <script type="module" src="./trie-search.js"></script>
+  <script type="module">
+    import { NonprofitImpactTrieEngine } from './trie-search.js';
+
+    // Initialize the trie engine with sample nonprofit-related words
+    const trieEngine = new NonprofitImpactTrieEngine();
+
+    // Populate the trie with sample data related to nonprofit impact
+    const sampleWords = [
+      'clean water',
+      'climate action',
+      'education support',
+      'healthcare access',
+      'poverty relief',
+      'reforestation',
+      'solar power',
+      'women empowerment',
+      'child education',
+      'microfinance',
+      'disaster relief',
+      'animal welfare',
+      'conservation',
+      'community development',
+      'food security',
+      'housing assistance',
+      'literacy program',
+      'vocational training',
+      'emergency aid',
+      'sustainable agriculture',
+    ];
+
+    sampleWords.forEach(word => trieEngine.insert(word));
+
+    // DOM Elements
+    const searchInput = document.getElementById('trie-search-input');
+    const suggestionsDiv = document.getElementById('trie-suggestions');
+    const treeContainer = document.getElementById('trie-tree-container');
+    const emptyState = document.querySelector('.trie-empty-state');
+    const searchBox = document.querySelector('.trie-search-box');
+    const clearBtn = document.getElementById('trie-search-clear');
+
+    // Render the trie tree SVG
+    function renderTrieTree(matchPrefix = '') {
+      const svg = treeContainer.querySelector('.trie-svg');
+      if (!svg) return;
+
+      const width = parseFloat(svg.getAttribute('viewBox')) || 800;
+      const height = 600;
+      const padding = 40;
+      const branchLength = 40;
+      const levelSpacing = 60;
+      const childSpacing = 80;
+
+      // Clear existing tree graphics
+      svg.innerHTML = '';
+
+      // BFS to position nodes
+      const nodes = []; // { x, y, node, word, isMatch }
+      const queue = [
+        { node: trieEngine.root, x: width / 2, y: padding, prefix: '', depth: 0 }
+      ];
+
+      let maxWidth = 0;
+      let maxHeight = 0;
+
+      while (queue.length > 0) {
+        const { node, x, y, prefix, depth } = queue.shift();
+        nodes.push({ x, y, node, word: node.word, isMatch: false });
+
+        // Check if this node's word starts with the match prefix
+        if (matchPrefix && node.word && node.word.startsWith(matchPrefix)) {
+          nodes[nodes.length - 1].isMatch = true;
+        }
+
+        const children = Array.from(node.children.values());
+        const numChildren = children.length;
+
+        if (numChildren === 0) {
+          // Leaf node - no children to position
+          continue;
+        }
+
+        // Calculate available width for children subtree
+        const childTotalWidth = numChildren * childSpacing;
+        const startX = x - childTotalWidth / 2 + childSpacing / 2;
+
+        for (let i = 0; i < numChildren; i++) {
+          const child = children[i];
+          const childX = startX + i * childSpacing;
+          const childY = y + levelSpacing;
+
+          // Draw edge line from parent to child
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          const isLast = i === numChildren - 1;
+          const branchColor = matchPrefix && node.word && node.word.startsWith(matchPrefix)
+            ? '#22c55e'
+            : '#3b82f6';
+          const glow = matchPrefix && node.word && node.word.startsWith(matchPrefix)
+            ? '2' : '0';
+
+          line.setAttribute('x1', String(x));
+          line.setAttribute('y1', String(y));
+          line.setAttribute('x2', String(childX));
+          line.setAttribute('y2', String(childY));
+          line.setAttribute('stroke', branchColor);
+          line.setAttribute('stroke-width', String(2 + (matchPrefix ? 1 : 0)));
+          line.setAttribute('stroke-linecap', 'round');
+          // Add glow effect for matched prefixes
+          if (matchPrefix && node.word && node.word.startsWith(matchPrefix)) {
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const radialGradient = document.createElementNS('http://www.w3.org/2000/svg', 'radialGradient');
+            radialGradient.setAttribute('id', `glow-${i}`);
+            radialGradient.setAttribute('cx', '0%');
+            radialGradient.setAttribute('cy', '0%');
+            radialGradient.setAttribute('r', '50%');
+            const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop1.setAttribute('offset', '0%');
+            stop1.setAttribute('stop-color', branchColor);
+            stop1.setAttribute('stop-opacity', '0.8');
+            const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop2.setAttribute('offset', '100%');
+            stop2.setAttribute('stop-color', branchColor);
+            stop2.setAttribute('stop-opacity', '0.1');
+            radialGradient.appendChild(stop1);
+            radialGradient.appendChild(stop2);
+            defs.appendChild(radialGradient);
+            svg.appendChild(defs);
+            line.setAttribute('stroke', `url(#glow-${i})`);
+          }
+
+          svg.appendChild(line);
+
+          // Recurse
+          queue.push({
+            node: child,
+            x: childX,
+            y: childY,
+            prefix: prefix + child,
+            depth: depth + 1
+          });
+        }
+      }
+
+      // Render node circles and labels
+      nodes.forEach((n, idx) => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+
+        // Determine node color
+        const isMatch = n.isMatch;
+        const color = isMatch ? '#22c55e' : '#6b7280';
+        const fillColor = isMatch ? 'rgba(34, 197, 94, 0.2)' : 'rgba(0, 0, 0, 0.3)';
+
+        circle.setAttribute('cx', String(n.x));
+        circle.setAttribute('cy', String(n.y));
+        circle.setAttribute('r', '8');
+        circle.setAttribute('fill', fillColor);
+        circle.setAttribute('stroke', color);
+        circle.setAttribute('stroke-width', isMatch ? '3' : '1');
+        circle.setAttribute('class', 'trie-node');
+        if (isMatch) circle.setAttribute('data-match', 'true');
+        svg.appendChild(circle);
+
+        // Text label
+        text.setAttribute('x', String(n.x));
+        text.setAttribute('y', String(n.y + 4));
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-family', '"JetBrains Mono", monospace`');
+        text.setAttribute('font-size', '10');
+        text.setAttribute('fill', color);
+        text.setAttribute('pointer-events', 'none');
+        text.textContent = n.word || '—';
+        svg.appendChild(text);
+      });
+
+      // Show empty state if no nodes
+      if (nodes.length === 0 || (nodes.length === 1 && !nodes[0].word)) {
+        emptyState.hidden = false;
+        treeContainer.hidden = true;
+      } else {
+        emptyState.hidden = true;
+        treeContainer.hidden = false;
+      }
+    }
+
+    // Render suggestions list
+    function renderSuggestions(matches) {
+      suggestionsDiv.hidden = matches.length === 0;
+      if (matches.length === 0) return;
+
+      suggestionsDiv.innerHTML = '';
+
+      matches.forEach((word, idx) => {
+        const item = document.createElement('div');
+        item.className = 'trie-suggestion-item';
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', 'false');
+        item.setAttribute('aria-label', `Suggestion: ${word}`);
+
+        // Highlight the prefix match
+        const lowerWord = word.toLowerCase();
+        const lowerInput = searchInput.value.toLowerCase();
+        let displayText = word;
+
+        if (lowerInput && lowerInput.length > 0) {
+          const regex = new RegExp(`(${lowerInput})`, 'i');
+          displayText = word.replace(regex, '<strong>$1</strong>');
+        }
+
+        item.innerHTML = `
+          <span class="trie-suggestion-text">${displayText}</span>
+          <span class="trie-suggestion-preview">✓</span>
+        `;
+
+        item.addEventListener('click', () => {
+          searchInput.value = word;
+          suggestionsDiv.hidden = true;
+          clearBtn.hidden = false;
+          // Render tree with the selected word as prefix
+          renderTrieTree(word);
+        });
+
+        suggestionsDiv.appendChild(item);
+      });
+    }
+
+    // Event: type in search input
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.trim();
+
+      // Clear suggestions and hide empty state
+      suggestionsDiv.hidden = true;
+      clearBtn.hidden = query.length === 0;
+
+      if (!query) {
+        renderTrieTree('');
+        emptyState.hidden = true;
+        treeContainer.hidden = false;
+        return;
+      }
+
+      // Find words with exact prefix
+      const prefixMatches = trieEngine.findWordsWithPrefix(query);
+
+      // Find fuzzy matches (within Levenshtein distance 1 or 2)
+      const fuzzyMatches = trieEngine.fuzzySearch(query, 2);
+
+      // Combine and deduplicate
+      const allMatches = [...new Set([...prefixMatches, ...fuzzyMatches])];
+
+      // Sort: prefix matches first, then fuzzy, both alphabetically
+      const sortedMatches = allMatches.sort((a, b) => {
+        // Priority: exact prefix matches first
+        const aIsPrefix = a.toLowerCase().startsWith(query.toLowerCase());
+        const bIsPrefix = b.toLowerCase().startsWith(query.toLowerCase());
+        if (aIsPrefix && !bIsPrefix) return -1;
+        if (!aIsPrefix && bIsPrefix) return 1;
+        return a.toLowerCase().localeCompare(b.toLowerCase());
+      });
+
+      renderSuggestions(sortedMatches);
+      renderTrieTree(query);
+    });
+
+    // Event: click outside to hide suggestions
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.trie-search-wrapper')) {
+        suggestionsDiv.hidden = true;
+        clearBtn.hidden = true;
+        searchInput.blur();
+      }
+    });
+
+    // Event: clear button
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      searchInput.focus();
+      suggestionsDiv.hidden = true;
+      clearBtn.hidden = true;
+      renderTrieTree('');
+    });
+
+    // Initial render
+    renderTrieTree('');
+  </script>
 </body>
 </html>
