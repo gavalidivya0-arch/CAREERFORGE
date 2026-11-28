@@ -1,33 +1,176 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PAWS &amp; HAVEN Cron Schedule Builder</title>
-  <link rel="stylesheet" href="cron-parser.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Build, translate, and preview five-part cron schedules for Pet Adoption Haven shelter care and foster matching workflows.">
+  <title>Cron Schedule Builder — Pet Adoption Haven</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./cron-parser.css">
 </head>
-<body>
-  <main>
-    <a href="index.html">&larr; Back to PAWS &amp; HAVEN</a>
-    <h1>Cron schedule builder</h1>
-    <p>Plan recurring shelter jobs such as feeding rounds or foster check-ins. Times use your local time zone.</p>
-    <form onsubmit="return false">
-      <label>Minute <input data-field value="0" autocomplete="off" spellcheck="false"></label>
-      <label>Hour <input data-field value="7,18" autocomplete="off" spellcheck="false"></label>
-      <label>Day <input data-field value="*" autocomplete="off" spellcheck="false"></label>
-      <label>Month <input data-field value="*" autocomplete="off" spellcheck="false"></label>
-      <label>Weekday <input data-field value="*" autocomplete="off" spellcheck="false"></label>
-    </form>
-    <div class="presets">
-      <button type="button" data-preset="30 8 * * *">Morning medication round</button>
-      <button type="button" data-preset="0 10 * * sat">Saturday adoption day</button>
-      <button type="button" data-preset="0 9 1 * *">Monthly vaccine review</button>
-    </div>
-    <code id="tokens"></code>
-    <p id="explanation" role="status"></p>
-    <h2>Next runs</h2>
-    <ol id="runs"></ol>
-  </main>
-  <script type="module" src="cron-parser.js"></script>
+<body class="cron-page">
+  <div class="cron-shell" data-cron-builder>
+    <header class="cron-hero">
+      <nav class="hero-nav" aria-label="Breadcrumb">
+        <a class="back-link" href="./index.html"><span aria-hidden="true">←</span> Paws &amp; Haven</a>
+        <span class="engine-pill"><span class="engine-dot" aria-hidden="true"></span> Shelter Scheduler</span>
+      </nav>
+
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Pet Adoption Haven / Care &amp; Foster Automation</p>
+          <h1>Shelter schedules, <span class="gradient-text">decoded.</span></h1>
+          <p class="hero-subtitle">Compose a five-part cron expression, translate it into natural English, and preview the exact upcoming timestamps for kennel rounds, foster digests, and adoption updates.</p>
+          <div class="hero-tags" aria-label="Capabilities">
+            <span>5-field cron</span>
+            <span>Plain-English output</span>
+            <span>Next 5 executions</span>
+          </div>
+        </div>
+
+        <aside class="next-brief" aria-label="Next scheduled execution">
+          <span class="brief-label">Next shelter run</span>
+          <strong class="brief-time" id="hero-next-run">—</strong>
+          <span class="brief-relative" id="hero-next-relative">Calculating…</span>
+          <span class="brief-zone">Local browser time</span>
+        </aside>
+      </div>
+    </header>
+
+    <main class="cron-layout">
+      <section class="panel builder-panel" aria-labelledby="builder-heading">
+        <header class="panel-head">
+          <div>
+            <p class="section-kicker">01 · Compose</p>
+            <h2 id="builder-heading">Schedule expression</h2>
+          </div>
+          <button type="button" class="ghost-button" id="reset-expression">Reset</button>
+        </header>
+
+        <div class="field-grid">
+          <label class="field-card" data-field-card="minute">
+            <span class="field-top"><span class="field-name">Minute</span><span class="field-range">0–59</span></span>
+            <input class="cron-input" id="cron-minute" type="text" value="0" autocomplete="off" spellcheck="false" aria-describedby="minute-hint">
+            <span class="field-hint" id="minute-hint">0 or */15</span>
+          </label>
+
+          <label class="field-card" data-field-card="hour">
+            <span class="field-top"><span class="field-name">Hour</span><span class="field-range">0–23</span></span>
+            <input class="cron-input" id="cron-hour" type="text" value="7" autocomplete="off" spellcheck="false" aria-describedby="hour-hint">
+            <span class="field-hint" id="hour-hint">7 or 7-19</span>
+          </label>
+
+          <label class="field-card" data-field-card="day of month">
+            <span class="field-top"><span class="field-name">Day</span><span class="field-range">1–31</span></span>
+            <input class="cron-input" id="cron-day" type="text" value="*" autocomplete="off" spellcheck="false" aria-describedby="day-hint">
+            <span class="field-hint" id="day-hint">day of month</span>
+          </label>
+
+          <label class="field-card" data-field-card="month">
+            <span class="field-top"><span class="field-name">Month</span><span class="field-range">1–12</span></span>
+            <input class="cron-input" id="cron-month" type="text" value="*" autocomplete="off" spellcheck="false" aria-describedby="month-hint">
+            <span class="field-hint" id="month-hint">JAN–DEC</span>
+          </label>
+
+          <label class="field-card" data-field-card="weekday">
+            <span class="field-top"><span class="field-name">Weekday</span><span class="field-range">0–6</span></span>
+            <input class="cron-input" id="cron-weekday" type="text" value="1-5" autocomplete="off" spellcheck="false" aria-describedby="weekday-hint">
+            <span class="field-hint" id="weekday-hint">0 = Sunday</span>
+          </label>
+        </div>
+
+        <div class="expression-output">
+          <div class="expression-label">
+            <span>Generated expression</span>
+            <span class="expression-badge">5 fields</span>
+          </div>
+          <div class="expression-row">
+            <code id="raw-expression">0 7 * * 1-5</code>
+            <button type="button" class="copy-button" id="copy-expression">Copy</button>
+          </div>
+          <div class="token-row" id="cron-tokens" aria-label="Cron field tokens"></div>
+        </div>
+
+        <div class="preset-block">
+          <span class="preset-label">Shelter care presets</span>
+          <div class="preset-row">
+            <button type="button" class="preset-chip" data-cron="*/15 * * * *">Kennel telemetry (15m)</button>
+            <button type="button" class="preset-chip" data-cron="0 7 * * 1-5">Weekday morning feed</button>
+            <button type="button" class="preset-chip" data-cron="0 */6 * * *">Hydration check (6h)</button>
+            <button type="button" class="preset-chip" data-cron="30 18 * * *">Evening med rounds</button>
+            <button type="button" class="preset-chip" data-cron="0 10 * * 0,6">Weekend adoption fair</button>
+            <button type="button" class="preset-chip" data-cron="0 9 1 * *">Monthly vaccine audit</button>
+          </div>
+        </div>
+
+        <div class="error-banner" id="cron-error" role="alert" hidden></div>
+      </section>
+
+      <section class="panel translation-panel" aria-labelledby="translation-heading">
+        <header class="panel-head">
+          <div>
+            <p class="section-kicker">02 · Translate</p>
+            <h2 id="translation-heading">Plain-English schedule</h2>
+          </div>
+          <span class="live-badge">Live</span>
+        </header>
+
+        <div class="human-card">
+          <div class="human-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <circle cx="12" cy="12" r="8.5"></circle>
+              <path d="M12 7.5V12l3 2"></path>
+            </svg>
+          </div>
+          <p class="human-text" id="human-readable" aria-live="polite">At 07:00 on weekdays</p>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-card">
+            <span class="meta-label">Gap between runs</span>
+            <strong class="meta-value" id="cadence-value">—</strong>
+          </div>
+          <div class="meta-card">
+            <span class="meta-label">Timezone</span>
+            <strong class="meta-value" id="timezone-value">Local time</strong>
+          </div>
+        </div>
+
+        <div class="legend" aria-label="Cron token legend">
+          <span class="legend-item"><span class="token-swatch swatch-wildcard"></span>Wildcard</span>
+          <span class="legend-item"><span class="token-swatch swatch-step"></span>Step</span>
+          <span class="legend-item"><span class="token-swatch swatch-range"></span>Range</span>
+          <span class="legend-item"><span class="token-swatch swatch-list"></span>List</span>
+          <span class="legend-item"><span class="token-swatch swatch-fixed"></span>Fixed</span>
+        </div>
+      </section>
+
+      <section class="panel schedule-panel" aria-labelledby="schedule-heading">
+        <header class="panel-head">
+          <div>
+            <p class="section-kicker">03 · Preview</p>
+            <h2 id="schedule-heading">Upcoming executions</h2>
+          </div>
+          <div class="schedule-actions">
+            <span class="count-badge" id="run-count">5 runs</span>
+            <button type="button" class="ghost-button" id="refresh-runs">Refresh</button>
+          </div>
+        </header>
+
+        <ol class="run-list" id="next-runs" aria-live="polite"></ol>
+        <p class="schedule-note">Runs are calculated in your browser's local timezone, starting from the next full minute.</p>
+      </section>
+    </main>
+
+    <footer class="cron-footer">
+      <span>Pet Adoption Haven · Paws &amp; Haven Automation</span>
+      <span>Cron syntax: minute hour day-of-month month day-of-week</span>
+    </footer>
+  </div>
+
+  <p class="sr-only" id="copy-status" role="status" aria-live="polite"></p>
+  <script type="module" src="./cron-parser.js"></script>
 </body>
 </html>
